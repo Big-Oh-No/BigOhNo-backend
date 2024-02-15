@@ -18,3 +18,7 @@ To run database migrations, run
 ```sh
 alembic revision -autogenerate -m "REVISION MESSAGE"
 ```
+
+## UML Design for Database
+
+![UML](./assets/UML.png)
