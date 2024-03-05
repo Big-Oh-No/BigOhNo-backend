@@ -16,7 +16,7 @@ uvicorn app.main:app --host 0.0.0.0 --reload
 ### Running Alembic Migrations
 To run database migrations, run
 ```sh
-alembic revision -autogenerate -m "REVISION MESSAGE"
+alembic revision --autogenerate -m "REVISION MESSAGE"
 ```
 
 ## UML Design for Database

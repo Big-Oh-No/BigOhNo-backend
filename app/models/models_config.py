@@ -1,4 +1,7 @@
-# from .example import Example
+from .user import User, Teacher, Admin, Student
 from ..utils.db import Base
 
-# example = Example()
+user = User()
+admin = Admin()
+teacher = Teacher()
+student = Student()
