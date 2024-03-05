@@ -24,4 +24,4 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "Course Canva Backend v0.0.1"}
+    return {"message": "Korse Backend v0.0.1"}

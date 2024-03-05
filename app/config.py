@@ -1,4 +1,4 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -7,9 +7,6 @@ class Settings(BaseSettings):
     postgres_password: str
     database_name: str
     postgres_user: str
-    admin_pwd: str
-    discord_bot_token: str
-
 
     class Config:
         env_file = ".env"
