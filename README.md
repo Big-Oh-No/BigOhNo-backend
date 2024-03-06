@@ -22,3 +22,9 @@ alembic revision --autogenerate -m "REVISION MESSAGE"
 ## UML Design for Database
 
 ![UML](./assets/UML.png)
+
+## Testing
+To run unit tests, run
+```sh
+pytest -v --disable-warnings
+```
