@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 # from .routes import 
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+from app.config import settings
+from .utils.utils import populatedb
 
 app = FastAPI()
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +24,8 @@ app.add_middleware(
 
 # app.include_router(*.router)  
 
-@app.get("/")
-async def root():
+@app.get("/", status_code=200)
+async def root(db: Session = Depends(get_db)):
+    if settings.mode == "development":
+        populatedb(db) 
     return {"message": "Korse Backend v0.0.1"}

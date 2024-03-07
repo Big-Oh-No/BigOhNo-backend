@@ -7,8 +7,9 @@ class Settings(BaseSettings):
     postgres_password: str
     database_name: str
     postgres_user: str
+    mode: str
 
-    class Config:
+    class ConfigDict:
         env_file = ".env"
 
 

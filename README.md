@@ -19,6 +19,13 @@ To run database migrations, run
 alembic revision --autogenerate -m "REVISION MESSAGE"
 ```
 
+## Testing
+To run unit tests, run
+```sh
+pytest -v --disable-warnings
+```
+
+
 ## UML Design for Database
 
 ![UML](./assets/UML.png)

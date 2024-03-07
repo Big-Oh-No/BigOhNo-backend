@@ -11,3 +11,5 @@ starlette-admin
 requests
 lxml
 pydantic-settings
+pytest
+httpx

@@ -1,5 +1,5 @@
 from ..utils.db import Base
-from sqlalchemy import Column, ForeignKey, Integer, String, TIMESTAMP, Enum
+from sqlalchemy import Column, ForeignKey, Integer, String, TIMESTAMP, Enum, Boolean
 from sqlalchemy.sql.expression import text
 from sqlalchemy.orm import relationship
 import enum
@@ -41,6 +41,7 @@ class User(Base):
     pronouns = Column(String)
     profile_image = Column(String)
     role = Column(Enum(Role), nullable=False)
+    verified = Column(Boolean, server_default="FALSE", nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"), nullable=False)
     
     
