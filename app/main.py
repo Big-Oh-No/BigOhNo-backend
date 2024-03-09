@@ -11,7 +11,7 @@ app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 
 origins = [
-    "http://localhost",
+    "*",
 ]
 
 app.add_middleware(

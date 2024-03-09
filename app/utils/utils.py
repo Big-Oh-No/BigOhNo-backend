@@ -1,8 +1,12 @@
 from app.utils.db import get_db
 from fastapi import Depends
 from sqlalchemy.orm import Session
+from hashlib import sha256
 
 import app.models.user as user
+
+def hash(password: str):
+    return sha256(password.encode('utf-8')).hexdigest()
 
 def populatedb(db: Session = Depends(get_db)):
     # clear db
