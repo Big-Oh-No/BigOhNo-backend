@@ -26,6 +26,6 @@ app.add_middleware(
 
 @app.get("/", status_code=200)
 async def root(db: Session = Depends(get_db)):
-    if settings.mode == "development":
-        populatedb(db) 
+    # comment it on production
+    populatedb(db) 
     return {"message": "Korse Backend v0.0.1"}
