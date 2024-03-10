@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.utils.db import get_db, Base
 from fastapi.testclient import TestClient
+from app.models import user_model
 from app.main import app
 
 SQL_ALCHEMY_DATABASE_URL = f"postgresql://{settings.postgres_user}:{settings.postgres_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}_test"
@@ -43,3 +44,52 @@ def token():
 def authorized_client(client, token):
     client.headers = {**client.headers, "Authorization": f"Bearer {token}"}
     return client
+
+@pytest.fixture
+def test_verified_user(session):
+    user_data = [
+        {
+            "email": "student@gmail.com",
+            "first_name": "John",
+            "last_name": "Doe",
+            "bio": "I am a second year student.",
+            "password" : "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+            "gender": user_model.Gender.male,
+            "pronouns": "He/Him",
+            "role": user_model.Role.student,
+            "verified": True
+        },
+        {
+            "email": "teacher@gmail.com",
+            "first_name": "James",
+            "last_name": "Potter",
+            "bio": "I am a professor.",
+            "password" : "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+            "gender": user_model.Gender.male,
+            "pronouns": "He/Him",
+            "role": user_model.Role.teacher,
+            "verified": True
+        },
+        {
+            "email": "admin@gmail.com",
+            "first_name": "Dave",
+            "last_name": "Madland",
+            "bio": "I am Admin.",
+            "password" : "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+            "gender": user_model.Gender.male,
+            "pronouns": "He/Him",
+            "role": user_model.Role.admin,
+            "verified": True
+        },
+    ]
+
+    def create_user(user_data):
+        return user_model.User(**user_data)
+    
+
+    user_map = map(create_user, user_data)
+    users = list(user_map)
+    session.add_all(users)
+    session.commit()
+    users_list = session.query(user_model.User).all()
+    return users_list

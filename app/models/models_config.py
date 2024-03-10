@@ -1,4 +1,4 @@
-from .user import User, Teacher, Admin, Student
+from .user_model import User, Teacher, Admin, Student
 from ..utils.db import Base
 
 user = User()
