@@ -101,3 +101,31 @@ async def signup(
         db.refresh(student)
 
     return {"message": "Account created successfully"}
+
+
+
+@router.post(
+    "/check",
+    status_code=200
+)
+async def check(
+    user: user_schema.UserSignIn,
+    db: Session = Depends(get_db)
+):
+    """ checks if a user is valid and verified """
+
+    user = db.query(user_model.User).filter(and_(user_model.User.email == user.email,user_model.User.password == hash(user.password))).first()
+
+    if not user:
+       raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Wrong email and password combination"
+        )
+    
+    if not user.verified:
+        raise HTTPException(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="User is not verified"
+        )
+    
+    return {"message" : "User is verified"}
