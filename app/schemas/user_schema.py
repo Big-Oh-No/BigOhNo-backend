@@ -1,8 +1,20 @@
+from typing import Optional
 from pydantic import BaseModel
+from ..models import user_model
 
-class User(BaseModel):
+class UserSignIn(BaseModel):
     email: str
     password: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class UserSignUp(BaseModel):
+    first_name: str
+    last_name: Optional[str]
+    email: str
+    password: str
+    role: user_model.Role
+
+    class Config:
+        from_attributes = True
