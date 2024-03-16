@@ -18,3 +18,9 @@ class UserSignUp(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UserVerificationCheck(BaseModel):
+    role: user_model.Role
+
+    class Config:
+        from_attributes = True
