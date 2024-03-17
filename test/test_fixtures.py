@@ -54,9 +54,9 @@ def test_verified_user(session):
             "last_name": "Doe",
             "bio": "I am a second year student.",
             "password" : "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
-            "gender": user_model.Gender.male,
+            "gender": user_model.GenderEnum.male,
             "pronouns": "He/Him",
-            "role": user_model.Role.student,
+            "role": user_model.RoleEnum.student,
             "verified": True
         },
         {
@@ -65,9 +65,9 @@ def test_verified_user(session):
             "last_name": "Potter",
             "bio": "I am a professor.",
             "password" : "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
-            "gender": user_model.Gender.male,
+            "gender": user_model.GenderEnum.male,
             "pronouns": "He/Him",
-            "role": user_model.Role.teacher,
+            "role": user_model.RoleEnum.teacher,
             "verified": True
         },
         {
@@ -76,9 +76,9 @@ def test_verified_user(session):
             "last_name": "Madland",
             "bio": "I am Admin.",
             "password" : "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
-            "gender": user_model.Gender.male,
+            "gender": user_model.GenderEnum.male,
             "pronouns": "He/Him",
-            "role": user_model.Role.admin,
+            "role": user_model.RoleEnum.admin,
             "verified": True
         },
     ]
@@ -105,9 +105,9 @@ def test_unverified_user(session):
             "last_name": "Doe",
             "bio": "I am a second year student.",
             "password" : "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
-            "gender": user_model.Gender.male,
+            "gender": user_model.GenderEnum.male,
             "pronouns": "He/Him",
-            "role": user_model.Role.student,
+            "role": user_model.RoleEnum.student,
             "verified": False
         },
         {
@@ -116,9 +116,9 @@ def test_unverified_user(session):
             "last_name": "Potter",
             "bio": "I am a professor.",
             "password" : "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
-            "gender": user_model.Gender.male,
+            "gender": user_model.GenderEnum.male,
             "pronouns": "He/Him",
-            "role": user_model.Role.teacher,
+            "role": user_model.RoleEnum.teacher,
             "verified": False
         },
         {
@@ -127,9 +127,9 @@ def test_unverified_user(session):
             "last_name": "Madland",
             "bio": "I am Admin.",
             "password" : "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
-            "gender": user_model.Gender.male,
+            "gender": user_model.GenderEnum.male,
             "pronouns": "He/Him",
-            "role": user_model.Role.admin,
+            "role": user_model.RoleEnum.admin,
             "verified": False
         },
     ]
