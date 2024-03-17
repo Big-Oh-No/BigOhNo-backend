@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.utils.db import get_db, Base
 from fastapi.testclient import TestClient
-from app.models import user_model
+from app.models import user_model, course_model
 from app.main import app
 
 SQL_ALCHEMY_DATABASE_URL = f"postgresql://{settings.postgres_user}:{settings.postgres_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}_test"
@@ -173,3 +173,93 @@ def test_verified_teacher(session):
     session.add(teacher)
     session.commit()
     session.refresh(teacher)
+
+    return teacher
+
+@pytest.fixture
+def test_verified_teacher_2(session):
+    user = user_model.User(
+        first_name = "Quin",
+        last_name = "Shaw",
+        bio = "I am a teacher.",
+        email = "teacher2@korse.com",
+        password = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", # password
+        gender = user_model.GenderEnum.female,
+        pronouns = "She/Her",
+        role = user_model.RoleEnum.teacher,
+        verified = True
+    )
+    
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    teacher = user_model.Teacher(
+        faculty = "Science and Engineering",
+        office = "ASC 154",
+        contact = "1234567890",
+        user_id = user.id
+    )
+
+    session.add(teacher)
+    session.commit()
+    session.refresh(teacher)
+
+    return teacher
+
+@pytest.fixture
+def test_courses(session, test_verified_teacher, test_verified_teacher_2):
+    course_1 = course_model.Course(
+        dept=course_model.DeptEnum.cosc,
+        code="111",
+        name="Introduction to Programming",
+        description="Introduction to the design, implementation, and understanding of computer programs. Topics include problem solving, algorithm design, and data and procedural abstraction, with emphasis on the development of working programs.",
+        term=course_model.TermEnum.w_one,
+        year=2024,
+        credits=3,
+        total_seats=100,
+        status=course_model.CourseStatusEnum.active,
+        teacher_id = test_verified_teacher.id
+    )
+    course_2 = course_model.Course(
+        dept=course_model.DeptEnum.stat,
+        code="230",
+        name="Introductory Statistics",
+        description="Applied statistics for students with a first-year calculus background. Estimation and testing of hypotheses, problem formulation, models and basic methods in analysis of variance, linear regression, and non-parametric methods. Descriptive statistics and probability are presented as a basis for such procedures.",
+        term=course_model.TermEnum.w_one,
+        year=2024,
+        credits=3,
+        total_seats=60,
+        status=course_model.CourseStatusEnum.active,
+        teacher_id = test_verified_teacher.id
+    )
+    course_3 = course_model.Course(
+        dept=course_model.DeptEnum.stat,
+        code="303",
+        name="Intermediate Probability",
+        description="Multivariate probability distributions, moment and generating functions.",
+        term=course_model.TermEnum.w_one,
+        year=2024,
+        credits=3,
+        total_seats=30,
+        status=course_model.CourseStatusEnum.active,
+        teacher_id = test_verified_teacher.id
+    )
+    course_4 = course_model.Course(
+        dept=course_model.DeptEnum.phys,
+        code="304",
+        name="Introduction to Quantum Mechanics",
+        description="The beginnings of quantum mechanics, wave mechanics and the Schroedinger equation, one-dimensional potentials, the postulates of quantum mechanics, and applications to three-dimensional systems.",
+        term=course_model.TermEnum.w_one,
+        year=2024,
+        credits=3,
+        total_seats=30,
+        status=course_model.CourseStatusEnum.active,
+        teacher_id = test_verified_teacher_2.id
+    )
+
+    session.add(course_1)
+    session.add(course_2)
+    session.add(course_3)
+    session.add(course_4)
+    session.commit()

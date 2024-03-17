@@ -3,7 +3,6 @@ from test.test_fixtures import *
 def test_check_user(authorized_client, test_verified_teacher):
     res = authorized_client.post("/user/get_user",json={'email': 'teacher@korse.com', 'password': 'password'})
     assert res.status_code == 200
-    print(res.json())
     assert res.json()["user"]["role"] == "teacher"
     assert res.json()["user"]["email"] == "teacher@korse.com"
 
