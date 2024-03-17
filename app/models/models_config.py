@@ -6,6 +6,5 @@ user = User()
 admin = Admin()
 teacher = Teacher()
 student = Student()
-enrollment = Enrollment()
 course = Course()
-
+enrollment = Enrollment()

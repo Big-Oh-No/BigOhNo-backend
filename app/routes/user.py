@@ -84,12 +84,12 @@ async def signup(
     db.commit()
     db.refresh(user)
 
-    if user.role == user_model.Role.admin:
+    if user.role == user_model.RoleEnum.admin:
         admin = user_model.Admin(user_id = user.id)
         db.add(admin)
         db.commit()
         db.refresh(admin)
-    elif user.role == user_model.Role.teacher:
+    elif user.role == user_model.RoleEnum.teacher:
         teacher = user_model.Teacher(user_id = user.id)
         db.add(teacher)
         db.commit()

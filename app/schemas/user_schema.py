@@ -14,7 +14,7 @@ class UserSignUp(BaseModel):
     last_name: Optional[str]
     email: str
     password: str
-    role: user_model.Role
+    role: user_model.RoleEnum
 
     class Config:
         from_attributes = True
