@@ -106,7 +106,8 @@ async def signup(
 
 @router.post(
     "/check",
-    status_code=200
+    status_code=200,
+    response_model=user_schema.UserVerificationCheck
 )
 async def check(
     user: user_schema.UserSignIn,
@@ -127,5 +128,5 @@ async def check(
             status_code=status.HTTP_417_EXPECTATION_FAILED,
             detail="User is not verified"
         )
-    
-    return {"message" : "User is verified"}
+
+    return user_schema.UserVerificationCheck(role=user.role)
