@@ -144,3 +144,32 @@ def test_unverified_user(session):
     session.commit()
     users_list = session.query(user_model.User).all()
     return users_list
+
+@pytest.fixture
+def test_verified_teacher(session):
+    user = user_model.User(
+        first_name = "July",
+        last_name = "Frost",
+        bio = "I am a teacher.",
+        email = "teacher@korse.com",
+        password = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", # password
+        gender = user_model.GenderEnum.female,
+        pronouns = "She/Her",
+        role = user_model.RoleEnum.teacher,
+        verified = True
+    )
+    
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    teacher = user_model.Teacher(
+        faculty = "Science and Engineering",
+        office = "ASC 154",
+        contact = "1234567890",
+        user_id = user.id
+    )
+
+    session.add(teacher)
+    session.commit()
+    session.refresh(teacher)

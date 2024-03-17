@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from ..utils.db import get_db
@@ -103,18 +103,16 @@ async def signup(
     return {"message": "Account created successfully"}
 
 
-
 @router.post(
-    "/check",
+    "/get_user",
     status_code=200,
-    response_model=user_schema.UserVerificationCheck
 )
-async def check(
+async def get_user(
     user: user_schema.UserSignIn,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),    
 ):
-    """ checks if a user is valid and verified """
-
+    """ gets a user profile """
+    
     user = db.query(user_model.User).filter(and_(user_model.User.email == user.email,user_model.User.password == hash(user.password))).first()
 
     if not user:
@@ -128,5 +126,48 @@ async def check(
             status_code=status.HTTP_417_EXPECTATION_FAILED,
             detail="User is not verified"
         )
-
-    return user_schema.UserVerificationCheck(role=user.role)
+    
+    user_json = user_schema.User(
+            id=user.id,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            bio=user.bio,
+            email=user.email,
+            gender=user.gender,
+            pronouns=user.pronouns,
+            profile_image=user.profile_image,
+            role=user.role,
+            verified=user.verified
+        )
+    
+    if user.role == user_model.RoleEnum.admin:
+        admin = db.query(user_model.Admin).filter(user_model.Admin.user_id == user.id).first()
+        if not admin:
+            raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Unexpected error occured"
+        )
+        return user_schema.Admin(user=user_json, admin_id=admin.id, contact=admin.contact, office=admin.office)
+        
+    if user.role == user_model.RoleEnum.teacher:
+        teacher = db.query(user_model.Teacher).filter(user_model.Teacher.user_id == user.id).first()
+        if not teacher:
+            raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Unexpected error occured"
+        )
+        return user_schema.Teacher(user=user_json, teacher_id=teacher.id, faculty=teacher.faculty, office=teacher.office, contact=teacher.contact)
+        
+    if user.role == user_model.RoleEnum.student:
+        student = db.query(user_model.Student).filter(user_model.Student.user_id == user.id).first()
+        if not student:
+            raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Unexpected error occured"
+        )
+        return user_schema.Student(user=user_json, student_id=student.id, department=student.department, year=student.year, degree=student.degree)
+        
+    raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Unexpected error occured"
+    )

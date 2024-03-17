@@ -11,8 +11,8 @@ def hash(password: str):
 def populatedb(db: Session = Depends(get_db)):
     # clear db
     db.query(course_model.Enrollment).delete()
-    db.query(user_model.Teacher).delete()
     db.query(course_model.Course).delete()
+    db.query(user_model.Teacher).delete()
     db.query(user_model.Student).delete()
     db.query(user_model.Admin).delete()
     db.query(user_model.User).delete()
@@ -190,7 +190,7 @@ def populatedb(db: Session = Depends(get_db)):
         name="Introduction to Programming",
         description="Introduction to the design, implementation, and understanding of computer programs. Topics include problem solving, algorithm design, and data and procedural abstraction, with emphasis on the development of working programs.",
         term=course_model.TermEnum.w_one,
-        year="2024",
+        year=2024,
         credits=3,
         total_seats=100,
         status=course_model.CourseStatusEnum.active,
@@ -202,7 +202,7 @@ def populatedb(db: Session = Depends(get_db)):
         name="Introductory Statistics",
         description="Applied statistics for students with a first-year calculus background. Estimation and testing of hypotheses, problem formulation, models and basic methods in analysis of variance, linear regression, and non-parametric methods. Descriptive statistics and probability are presented as a basis for such procedures.",
         term=course_model.TermEnum.w_one,
-        year="2024",
+        year=2024,
         credits=3,
         total_seats=60,
         status=course_model.CourseStatusEnum.active,
@@ -214,7 +214,7 @@ def populatedb(db: Session = Depends(get_db)):
         name="Intermediate Probability",
         description="Multivariate probability distributions, moment and generating functions.",
         term=course_model.TermEnum.w_one,
-        year="2024",
+        year=2024,
         credits=3,
         total_seats=30,
         status=course_model.CourseStatusEnum.active,
@@ -226,7 +226,7 @@ def populatedb(db: Session = Depends(get_db)):
         name="Introduction to Quantum Mechanics",
         description="The beginnings of quantum mechanics, wave mechanics and the Schroedinger equation, one-dimensional potentials, the postulates of quantum mechanics, and applications to three-dimensional systems.",
         term=course_model.TermEnum.w_one,
-        year="2024",
+        year=2024,
         credits=3,
         total_seats=30,
         status=course_model.CourseStatusEnum.active,
