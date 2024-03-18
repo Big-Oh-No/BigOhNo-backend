@@ -34,7 +34,6 @@ class CourseStatusStudent(BaseModel):
     credits: int
     total_seats: int
     taken_seats: int
-    status: course_model.CourseStatusEnum
     teacher_name: str
     status: course_model.StatusEnum
     comment: Optional[str]
