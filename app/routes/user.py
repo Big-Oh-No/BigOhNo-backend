@@ -5,6 +5,7 @@ from ..utils.db import get_db
 from ..utils.utils import hash
 from ..models import user_model
 from ..schemas import user_schema
+from typing import List
 import re
 
 router = APIRouter(
@@ -171,3 +172,43 @@ async def get_user(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="Unexpected error occured"
     )
+
+@router.post(
+    "/verification_status",
+    status_code=200,
+    response_model=List[user_schema.UserVerifcationView]
+)
+async def verification_status(
+    user: user_schema.UserSignIn,
+    db: Session = Depends(get_db),    
+):
+    """Logs a user in"""
+    
+    user = db.query(user_model.User).filter(and_(user_model.User.email == user.email,user_model.User.password == hash(user.password))).first()
+
+    if not user:
+       raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Wrong email and password combination"
+        )
+    
+    if not user.verified:
+        raise HTTPException(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="User is not verified"
+        )
+    
+    if user.role != user_model.RoleEnum.admin:
+        raise HTTPException(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="User is not an admin"
+        )
+    
+    query = (
+        db
+        .query(user_model.User)
+        .filter(user_model.User.verified == False)
+        .all()
+    )
+
+    return query
