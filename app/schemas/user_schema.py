@@ -56,3 +56,9 @@ class Student(BaseModel):
     department: Optional[user_model.DepartmentEnum]
     year: Optional[int]
     degree: Optional[user_model.DegreeEnum]
+
+class UserVerifcationView(BaseModel):
+    first_name: str
+    last_name: Optional[str]
+    email: str
+    role: user_model.RoleEnum

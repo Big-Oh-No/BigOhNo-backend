@@ -45,6 +45,7 @@ def authorized_client(client, token):
     client.headers = {**client.headers, "Authorization": f"Bearer {token}"}
     return client
 
+# does not add profile to role models
 @pytest.fixture
 def test_verified_user(session):
     user_data = [
@@ -130,7 +131,6 @@ def test_unverified_user(session):
             "gender": user_model.GenderEnum.male,
             "pronouns": "He/Him",
             "role": user_model.RoleEnum.admin,
-            "verified": False
         },
     ]
 
@@ -263,3 +263,102 @@ def test_courses(session, test_verified_teacher, test_verified_teacher_2):
     session.add(course_3)
     session.add(course_4)
     session.commit()
+
+    return [course_1, course_2, course_3, course_4]
+
+@pytest.fixture
+def test_verified_student_1(session):
+    user = user_model.User(
+        first_name = "David",
+        last_name = "Harrison",
+        bio = "I am a student.",
+        email = "student1@korse.com",
+        password = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", # password
+        gender = user_model.GenderEnum.male,
+        pronouns = "He/Him/His",
+        role = user_model.RoleEnum.student,
+        verified = True
+    )
+    
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    student = user_model.Student(
+        department = user_model.DepartmentEnum.science,
+        year = 2,
+        degree = user_model.DegreeEnum.bsc,
+        user_id = user.id
+    )
+
+    session.add(student)
+    session.commit()
+    session.refresh(student)
+
+    return student
+
+@pytest.fixture
+def test_enrollment(session, test_courses, test_verified_student_1):
+    enroll_1 = course_model.Enrollment(
+        status=course_model.StatusEnum.approved,
+        course_id=test_courses[0].id,
+        student_id=test_verified_student_1.id
+    )
+    enroll_2 = course_model.Enrollment(
+        status=course_model.StatusEnum.approved,
+        course_id=test_courses[1].id,
+        student_id=test_verified_student_1.id
+    )
+    enroll_3 = course_model.Enrollment(
+        status=course_model.StatusEnum.pending,
+        course_id=test_courses[2].id,
+        student_id=test_verified_student_1.id
+    )
+    enroll_4 = course_model.Enrollment(
+        comment="Your preqs don't match.",
+        status=course_model.StatusEnum.declined,
+        course_id=test_courses[3].id,
+        student_id=test_verified_student_1.id
+    )
+
+    session.add(enroll_1)
+    session.add(enroll_2)
+    session.add(enroll_3)
+    session.add(enroll_4)
+    session.commit()
+    session.refresh(enroll_1)
+    session.refresh(enroll_2)
+    session.refresh(enroll_3)
+    session.refresh(enroll_4)
+
+    return [enroll_1, enroll_2, enroll_3, enroll_4]
+
+@pytest.fixture
+def test_verified_admin_1(session):
+    user = user_model.User(
+        first_name = "James",
+        last_name = "Bond",
+        bio = "I am an admin.",
+        email = "admin1@korse.com",
+        password = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", # password
+        gender = user_model.GenderEnum.male,
+        pronouns = "He/Him/His",
+        role = user_model.RoleEnum.admin,
+        verified = True
+    )
+    
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    admin = user_model.Admin(
+        contact = "1234567890",
+        office = "Office 125, SCI Building",
+        user_id = user.id
+    )
+
+    session.add(admin)
+    session.commit()
+    session.refresh(admin)
+
+    return admin

@@ -242,3 +242,36 @@ def populatedb(db: Session = Depends(get_db)):
     db.refresh(course_2)
     db.refresh(course_3)
     db.refresh(course_4)
+
+
+    enroll_1 = course_model.Enrollment(
+        status=course_model.StatusEnum.approved,
+        course_id=course_1.id,
+        student_id=student_3.id
+    )
+    enroll_2 = course_model.Enrollment(
+        status=course_model.StatusEnum.approved,
+        course_id=course_2.id,
+        student_id=student_3.id
+    )
+    enroll_3 = course_model.Enrollment(
+        status=course_model.StatusEnum.pending,
+        course_id=course_3.id,
+        student_id=student_3.id
+    )
+    enroll_4 = course_model.Enrollment(
+        comment="Your preqs don't match.",
+        status=course_model.StatusEnum.declined,
+        course_id=course_4.id,
+        student_id=student_3.id
+    )
+
+    db.add(enroll_1)
+    db.add(enroll_2)
+    db.add(enroll_3)
+    db.add(enroll_4)
+    db.commit()
+    db.refresh(enroll_1)
+    db.refresh(enroll_2)
+    db.refresh(enroll_3)
+    db.refresh(enroll_4)

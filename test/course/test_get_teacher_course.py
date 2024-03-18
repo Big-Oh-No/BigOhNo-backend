@@ -6,7 +6,7 @@ def test_get_teacher_courses(authorized_client, test_courses):
     assert len(res.json()) == 3
 
 def test_get_teacher_course_with_invalid_role(authorized_client, test_courses, test_verified_user):
-    res = authorized_client.post("/course/teacher",json={'email': 'teacher@gmail.com', 'password': 'password'})
+    res = authorized_client.post("/course/teacher",json={'email': 'student@gmail.com', 'password': 'password'})
     assert res.status_code == 409
     assert res.json()["detail"] == "User is not a teacher"
 
