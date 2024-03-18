@@ -24,3 +24,35 @@ class UserVerificationCheck(BaseModel):
 
     class Config:
         from_attributes = True
+
+class User(BaseModel):
+    id: int
+    first_name: str
+    last_name: Optional[str]
+    bio: Optional[str]
+    email: str
+    gender: Optional[user_model.GenderEnum]
+    pronouns: Optional[str]
+    profile_image: Optional[str]
+    role: user_model.RoleEnum
+    verified: bool
+
+class Admin(BaseModel):
+    user: User
+    admin_id: int
+    contact: Optional[str]
+    office: Optional[str]
+
+class Teacher(BaseModel):
+    user: User
+    teacher_id: int
+    faculty: Optional[str]
+    office: Optional[str]
+    contact: Optional[str]
+
+class Student(BaseModel):
+    user: User
+    student_id: int
+    department: Optional[user_model.DepartmentEnum]
+    year: Optional[int]
+    degree: Optional[user_model.DegreeEnum]
