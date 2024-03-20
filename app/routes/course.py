@@ -175,7 +175,7 @@ async def get_student_courses(
         .join(course_model.Student, course_model.Enrollment.student_id == course_model.Student.id)
         .join(user_model.Teacher, user_model.Teacher.id == course_model.Course.teacher_id)
         .join(user_model.User, user_model.User.id == user_model.Teacher.user_id)
-        .filter(course_model.Enrollment.status == course_model.StatusEnum.approved)
+        .filter(and_(course_model.Enrollment.status == course_model.StatusEnum.approved,course_model.Enrollment.student_id==student.id))
         .all()
     )
 
@@ -251,7 +251,7 @@ async def get_student_status_courses(
         .join(course_model.Student, course_model.Enrollment.student_id == course_model.Student.id)
         .join(user_model.Teacher, user_model.Teacher.id == course_model.Course.teacher_id)
         .join(user_model.User, user_model.User.id == user_model.Teacher.user_id)
-        .filter(or_(course_model.Enrollment.status == course_model.StatusEnum.pending, course_model.Enrollment.status == course_model.StatusEnum.declined))
+        .filter(and_(or_(course_model.Enrollment.status == course_model.StatusEnum.pending, course_model.Enrollment.status == course_model.StatusEnum.declined),course_model.Enrollment.student_id==student.id))
         .all()
     )
 
@@ -323,6 +323,12 @@ async def enroll(
             detail="No such active course found"
         )
     
+    if course.taken_seats == course.total_seats:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No seats available in the course"
+        )
+    
     check_enrollment = (
         db.query(course_model.Enrollment)
         .filter(and_(course_model.Enrollment.student_id==student.id, course_model.Enrollment.course_id==course_id))
@@ -379,11 +385,8 @@ async def enrollment_status(
             detail="User is not an admin"
         )
 
-
-
     query = (
-        db
-        .query(user_model.User.first_name, user_model.User.last_name, user_model.User.email, course_model.Course.dept, course_model.Course.code, course_model.Course.year, course_model.Course.term)
+        db.query(course_model.Enrollment.student_id, course_model.Enrollment.course_id, user_model.User.first_name, user_model.User.last_name, user_model.User.email, course_model.Course.dept, course_model.Course.code, course_model.Course.year, course_model.Course.term)
         .join(user_model.Student, user_model.User.id == user_model.Student.user_id)
         .join(course_model.Enrollment, user_model.Student.id == course_model.Enrollment.student_id)
         .join(course_model.Course, course_model.Course.id == course_model.Enrollment.course_id)
@@ -393,3 +396,90 @@ async def enrollment_status(
     )
 
     return query
+
+
+
+@router.patch(
+    "/enrollment_update/{dir}",
+    status_code=201,
+)
+async def enrollment_update(
+    dir: int, # dir: 0 approve, 1: reject
+    user: course_schema.CourseEnrollmentUpdate,
+    db: Session = Depends(get_db),    
+):
+    """ updates the enrollment status of an enrollment request """
+    
+    admin = db.query(user_model.User).filter(and_(user_model.User.email == user.email,user_model.User.password == hash(user.password))).first()
+
+    if not admin:
+       raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Wrong email and password combination"
+        )
+    
+    if not admin.verified:
+        raise HTTPException(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="User is not verified"
+        )
+    
+    if admin.role != user_model.RoleEnum.admin:
+        raise HTTPException(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="User is not an admin"
+        )
+
+    
+    course = db.query(course_model.Course).filter(course_model.Course.id == user.course_id).first()
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="no such course found"
+        )
+
+    decision = None
+
+
+    if dir == 0:
+        decision = course_model.StatusEnum.approved
+        if course.total_seats == course.taken_seats:
+            raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="no seats available"
+        )
+    elif dir == 1:
+        decision = course_model.StatusEnum.declined
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="dir must be either 0 or 1"
+        )
+
+    query = (
+        db
+        .query(course_model.Enrollment)
+        .filter(and_(course_model.Enrollment.student_id==user.student_id, course_model.Enrollment.course_id==user.course_id))
+        .first()
+    )
+
+    if not query:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="no such enrollment request found"
+        )
+    
+    if query.status == course_model.StatusEnum.approved and dir == 1:
+        course.taken_seats -= 1
+    elif query.status != course_model.StatusEnum.approved and dir == 0:
+        course.taken_seats += 1
+    
+    db.commit()
+    db.refresh(course)
+
+    query.status = decision
+    query.comment = user.comment
+    db.commit()
+    db.refresh(query)
+
+    return {"message": "enrollment request processed successfully"}

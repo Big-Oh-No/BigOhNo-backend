@@ -42,6 +42,8 @@ class CourseStatusStudent(BaseModel):
         from_attributes = True
 
 class CourseEnrollmentView(BaseModel):
+    student_id: int
+    course_id: int
     first_name: str
     last_name: Optional[str]
     email: str
@@ -49,6 +51,16 @@ class CourseEnrollmentView(BaseModel):
     code: int
     year: int
     term: course_model.TermEnum
+
+    class Config:
+        from_attributes = True
+
+class CourseEnrollmentUpdate(BaseModel):
+    email: str
+    password: str
+    student_id: int
+    course_id: int
+    comment: Optional[str]
 
     class Config:
         from_attributes = True

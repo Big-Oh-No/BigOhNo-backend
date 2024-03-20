@@ -193,6 +193,7 @@ def populatedb(db: Session = Depends(get_db)):
         year=2024,
         credits=3,
         total_seats=100,
+        taken_seats=1,
         status=course_model.CourseStatusEnum.active,
         teacher_id = teacher_2.id
     )
@@ -205,6 +206,7 @@ def populatedb(db: Session = Depends(get_db)):
         year=2024,
         credits=3,
         total_seats=60,
+        taken_seats=1,
         status=course_model.CourseStatusEnum.active,
         teacher_id = teacher_2.id
     )
