@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, desc
 from ..utils.db import get_db
 from ..utils.utils import hash
 from ..models import user_model
@@ -208,7 +208,53 @@ async def verification_status(
         db
         .query(user_model.User)
         .filter(user_model.User.verified == False)
+        .order_by(desc(user_model.User.created_at))
         .all()
     )
 
     return query
+
+
+@router.patch(
+    "/verify",
+    status_code=200,
+)
+async def verify(
+    user: user_schema.UserVerificationRequest,
+    db: Session = Depends(get_db),    
+):
+    """ Verifies a user """
+    
+    admin = db.query(user_model.User).filter(and_(user_model.User.email == user.email,user_model.User.password == hash(user.password))).first()
+
+    if not admin:
+       raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Wrong email and password combination"
+        )
+    
+    if not admin.verified:
+        raise HTTPException(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="User is not verified"
+        )
+    
+    if admin.role != user_model.RoleEnum.admin:
+        raise HTTPException(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="User is not an admin"
+        )
+    
+    client_user = db.query(user_model.User).filter(user_model.User.email == user.user_email).first()
+
+    if not client_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    client_user.verified = True
+    db.commit()
+    db.refresh(client_user)
+
+    return {"message" : "User Verified"}

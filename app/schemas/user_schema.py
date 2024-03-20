@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
-from ..models import user_model
+from ..models import user_model, course_model
 
 class UserSignIn(BaseModel):
     email: str
@@ -37,11 +37,17 @@ class User(BaseModel):
     role: user_model.RoleEnum
     verified: bool
 
+    class Config:
+        from_attributes = True
+
 class Admin(BaseModel):
     user: User
     admin_id: int
     contact: Optional[str]
     office: Optional[str]
+
+    class Config:
+        from_attributes = True
 
 class Teacher(BaseModel):
     user: User
@@ -49,6 +55,9 @@ class Teacher(BaseModel):
     faculty: Optional[str]
     office: Optional[str]
     contact: Optional[str]
+    
+    class Config:
+        from_attributes = True
 
 class Student(BaseModel):
     user: User
@@ -57,8 +66,22 @@ class Student(BaseModel):
     year: Optional[int]
     degree: Optional[user_model.DegreeEnum]
 
+    class Config:
+        from_attributes = True
+
 class UserVerifcationView(BaseModel):
     first_name: str
     last_name: Optional[str]
     email: str
     role: user_model.RoleEnum
+
+    class Config:
+        from_attributes = True
+
+class UserVerificationRequest(BaseModel):
+    email: str
+    password: str
+    user_email: str
+
+    class Config:
+        from_attributes = True
