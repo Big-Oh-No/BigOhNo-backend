@@ -323,6 +323,12 @@ async def enroll(
             detail="No such active course found"
         )
     
+    if course.taken_seats == course.total_seats:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No seats available in the course"
+        )
+    
     check_enrollment = (
         db.query(course_model.Enrollment)
         .filter(and_(course_model.Enrollment.student_id==student.id, course_model.Enrollment.course_id==course_id))
@@ -424,10 +430,24 @@ async def enrollment_update(
             detail="User is not an admin"
         )
 
+    
+    course = db.query(course_model.Course).filter(course_model.Course.id == user.course_id).first()
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="no such course found"
+        )
+
     decision = None
+
 
     if dir == 0:
         decision = course_model.StatusEnum.approved
+        if course.total_seats == course.taken_seats:
+            raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="no seats available"
+        )
     elif dir == 1:
         decision = course_model.StatusEnum.declined
     else:
@@ -449,6 +469,14 @@ async def enrollment_update(
             detail="no such enrollment request found"
         )
     
+    if query.status == course_model.StatusEnum.approved and dir == 1:
+        course.taken_seats -= 1
+    elif query.status != course_model.StatusEnum.approved and dir == 0:
+        course.taken_seats += 1
+    
+    db.commit()
+    db.refresh(course)
+
     query.status = decision
     query.comment = user.comment
     db.commit()
