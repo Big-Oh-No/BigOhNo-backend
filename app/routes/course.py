@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, asc, or_
 from ..utils.db import get_db
 from ..utils.utils import hash
 from ..models import user_model, course_model
@@ -287,7 +287,7 @@ async def enroll(
     user: user_schema.UserSignIn,
     db: Session = Depends(get_db),    
 ):
-    """ returns all student courses that are pending or rejected """
+    """ enrolls a student in a course """
 
     user = db.query(user_model.User).filter(and_(user_model.User.email == user.email,user_model.User.password == hash(user.password))).first()
 
@@ -347,3 +347,49 @@ async def enroll(
     db.refresh(enrollment_data)
 
     return {"message": "user enrollment request registered successfully"}
+
+@router.post(
+    "/enrollment_status",
+    status_code=200,
+    response_model=List[course_schema.CourseEnrollmentView]
+)
+async def enrollment_status(
+    user: user_schema.UserSignIn,
+    db: Session = Depends(get_db),    
+):
+    """ returns list of enrollment requests """
+    
+    user = db.query(user_model.User).filter(and_(user_model.User.email == user.email,user_model.User.password == hash(user.password))).first()
+
+    if not user:
+       raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Wrong email and password combination"
+        )
+    
+    if not user.verified:
+        raise HTTPException(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="User is not verified"
+        )
+    
+    if user.role != user_model.RoleEnum.admin:
+        raise HTTPException(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="User is not an admin"
+        )
+
+
+
+    query = (
+        db
+        .query(user_model.User.first_name, user_model.User.last_name, user_model.User.email, course_model.Course.dept, course_model.Course.code, course_model.Course.year, course_model.Course.term)
+        .join(user_model.Student, user_model.User.id == user_model.Student.user_id)
+        .join(course_model.Enrollment, user_model.Student.id == course_model.Enrollment.student_id)
+        .join(course_model.Course, course_model.Course.id == course_model.Enrollment.course_id)
+        .filter(course_model.Enrollment.status == course_model.StatusEnum.pending)
+        .order_by(asc(course_model.Enrollment.created_at))
+        .all()
+    )
+
+    return query
