@@ -175,7 +175,7 @@ async def get_student_courses(
         .join(course_model.Student, course_model.Enrollment.student_id == course_model.Student.id)
         .join(user_model.Teacher, user_model.Teacher.id == course_model.Course.teacher_id)
         .join(user_model.User, user_model.User.id == user_model.Teacher.user_id)
-        .filter(course_model.Enrollment.status == course_model.StatusEnum.approved)
+        .filter(and_(course_model.Enrollment.status == course_model.StatusEnum.approved,course_model.Enrollment.student_id==student.id))
         .all()
     )
 
@@ -251,7 +251,7 @@ async def get_student_status_courses(
         .join(course_model.Student, course_model.Enrollment.student_id == course_model.Student.id)
         .join(user_model.Teacher, user_model.Teacher.id == course_model.Course.teacher_id)
         .join(user_model.User, user_model.User.id == user_model.Teacher.user_id)
-        .filter(or_(course_model.Enrollment.status == course_model.StatusEnum.pending, course_model.Enrollment.status == course_model.StatusEnum.declined))
+        .filter(and_(or_(course_model.Enrollment.status == course_model.StatusEnum.pending, course_model.Enrollment.status == course_model.StatusEnum.declined),course_model.Enrollment.student_id==student.id))
         .all()
     )
 
