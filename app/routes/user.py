@@ -182,7 +182,7 @@ async def verification_status(
     user: user_schema.UserSignIn,
     db: Session = Depends(get_db),    
 ):
-    """Logs a user in"""
+    """ returns list of unverified users """
     
     user = db.query(user_model.User).filter(and_(user_model.User.email == user.email,user_model.User.password == hash(user.password))).first()
 

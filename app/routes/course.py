@@ -277,3 +277,73 @@ async def get_student_status_courses(
         ))
 
     return result
+
+@router.post(
+    "/enroll/{course_id}",
+    status_code=201
+)
+async def enroll(
+    course_id: int,
+    user: user_schema.UserSignIn,
+    db: Session = Depends(get_db),    
+):
+    """ returns all student courses that are pending or rejected """
+
+    user = db.query(user_model.User).filter(and_(user_model.User.email == user.email,user_model.User.password == hash(user.password))).first()
+
+    if not user:
+       raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Wrong email and password combination"
+        )
+    
+    if not user.verified:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User is not verified yet"
+        )
+    
+    student = db.query(user_model.Student).filter(user_model.Student.user_id == user.id).first()
+
+    if not student:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User is not a student"
+        )
+
+    course = (
+        db.query(course_model.Course)
+        .filter(and_(course_model.Course.id == course_id, course_model.Course.status == course_model.CourseStatusEnum.active))
+        .first()
+    )
+
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No such active course found"
+        )
+    
+    check_enrollment = (
+        db.query(course_model.Enrollment)
+        .filter(and_(course_model.Enrollment.student_id==student.id, course_model.Enrollment.course_id==course_id))
+        .first()
+    )
+
+    if check_enrollment:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Enrollment already exists"
+        )
+
+
+    enrollment_data = course_model.Enrollment(
+        comment="Enrollment request is under review. Please contact admin@korse.com for more information.",
+        course_id = course_id,
+        student_id = student.id
+    )
+
+    db.add(enrollment_data)
+    db.commit()
+    db.refresh(enrollment_data)
+
+    return {"message": "user enrollment request registered successfully"}
