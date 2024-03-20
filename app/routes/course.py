@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, asc, or_
 from ..utils.db import get_db
 from ..utils.utils import hash
 from ..models import user_model, course_model
 from ..schemas import user_schema, course_schema
-from typing import List
+from typing import List, Optional
+import shutil
+
 
 router = APIRouter(
     prefix="/course",
@@ -483,3 +485,104 @@ async def enrollment_update(
     db.refresh(query)
 
     return {"message": "enrollment request processed successfully"}
+
+@router.post(
+    "/create",
+    status_code=201
+)
+async def create(
+    syllabus_file: Optional[UploadFile] = Form(...),
+    course_img: Optional[UploadFile] = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    dept: course_model.DeptEnum = Form(...),
+    code: str = Form(...),
+    course_name: str = Form(...),
+    description: str = Form(...),
+    term: course_model.TermEnum = Form(...),
+    year: int = Form(...),
+    credits: int = Form(...),
+    total_seats: int = Form(...),
+    teacher_email: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """ creates a new course """
+
+    if total_seats <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="Course must have at least 1 seat"
+        )
+
+    admin = db.query(user_model.User).filter(and_(user_model.User.email == email,user_model.User.password == hash(password))).first()
+
+    if not admin:
+       raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Wrong email and password combination"
+        )
+    
+    if not admin.verified:
+        raise HTTPException(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="User is not verified"
+        )
+    
+    if admin.role != user_model.RoleEnum.admin:
+        raise HTTPException(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="User is not an admin"
+        )
+    
+    teacher = db.query(user_model.Teacher).join(user_model.User, user_model.Teacher.user_id==user_model.User.id).filter(user_model.User.email==teacher_email).first()
+
+    if not teacher:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No such teacher found"
+        )
+    
+    course = db.query(course_model.Course).filter(and_(course_model.Course.term==term, course_model.Course.year==year, course_model.Course.dept==dept, course_model.Course.code==code, course_model.Course.teacher_id==teacher.id)).first()
+    
+    if course:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="course already exists"
+        )
+    
+    unique_suffix = f"{dept}{code}{teacher.id}{term}{year}"
+    syllabus_url=None
+    image_url=None
+
+    if syllabus_file and syllabus_file.size != 0:
+        syllabus_url = f"data/syllabus/{unique_suffix}{syllabus_file.filename}"
+        with open(syllabus_url, "wb") as buffer:
+            contents = await syllabus_file.read()
+            buffer.write(contents)
+    
+    if course_img and course_img.size != 0:
+        image_url = f"data/courseimg/{unique_suffix}{course_img.filename}"
+        with open(image_url, "wb") as buffer:
+            contents = await course_img.read()
+            buffer.write(contents)
+
+
+    course_entry = course_model.Course(
+        dept=dept,
+        code=code,
+        name=course_name,
+        description=description,
+        syllabus_url=syllabus_url,
+        image_url=image_url,
+        term=term,
+        year=year,
+        credits=credits,
+        total_seats=total_seats,
+        teacher_id=teacher.id
+    )
+    
+    db.add(course_entry)
+    db.commit()
+    db.refresh(course_entry)
+
+    return {"message": "course added successfully"}
