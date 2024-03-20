@@ -5,3 +5,5 @@ venv
 .venv
 data/courseimg/*
 data/syllabus/*
+!data/courseimg/__init__
+!data/syllabus/__init__
