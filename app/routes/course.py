@@ -6,9 +6,22 @@ from ..utils.utils import hash
 from ..models import user_model, course_model
 from ..schemas import user_schema, course_schema
 from typing import List, Optional
-import shutil
+import socket
 
+PORT_DATA = 8000
+HOST = "0.0.0.0"
 
+# def get_ipv4_address():
+#     try:
+#         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#         s.connect(("8.8.8.8", 80))
+#         ipv4_address = s.getsockname()[0]
+#         s.close()
+#         return ipv4_address
+#     except socket.error as e:
+#         print("Socket error:", e)
+#         return None
+    
 router = APIRouter(
     prefix="/course",
     tags=["course"],
@@ -565,15 +578,21 @@ async def create(
         with open(image_url, "wb") as buffer:
             contents = await course_img.read()
             buffer.write(contents)
-
-
+    
+    syllabus_file_url = None
+    course_image_file_url = None
+    if syllabus_url:
+        syllabus_file_url = f"http://{HOST}:{PORT_DATA}/{syllabus_url}"
+    if image_url:
+        course_image_file_url = f"http://{HOST}:{PORT_DATA}/{image_url}"
+    
     course_entry = course_model.Course(
         dept=dept,
         code=code,
         name=course_name,
         description=description,
-        syllabus_url=syllabus_url,
-        image_url=image_url,
+        syllabus_url=syllabus_file_url,
+        image_url=course_image_file_url,
         term=term,
         year=year,
         credits=credits,

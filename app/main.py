@@ -6,8 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 from app.config import settings
 from .utils.utils import populatedb
+from fastapi.staticfiles import StaticFiles
+
 
 app = FastAPI()
+
 logging.basicConfig(level=logging.INFO)
 
 origins = [
@@ -23,7 +26,10 @@ app.add_middleware(
 )
 
 app.include_router(user.router)  
-app.include_router(course.router)  
+app.include_router(course.router) 
+
+app.mount("/data", StaticFiles(directory="data"), name="data")
+
 
 @app.get("/", status_code=200)
 async def root(db: Session = Depends(get_db)):

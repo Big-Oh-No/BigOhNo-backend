@@ -1,8 +1,7 @@
-from fastapi import UploadFile
 from test.test_fixtures import *
 
 
-def test_get_enrollment(authorized_client, test_verified_admin_1, test_verified_teacher):
+def test_create_course(authorized_client, test_verified_admin_1, test_verified_teacher):
     img_path = "assets/test.png"
 
     res = authorized_client.post("/course/create",
@@ -24,7 +23,7 @@ def test_get_enrollment(authorized_client, test_verified_admin_1, test_verified_
     
     assert res.status_code == 201
 
-def test_get_enrollment_with_wrong_teacher(authorized_client, test_verified_admin_1):
+def test_create_course_with_wrong_teacher(authorized_client, test_verified_admin_1):
     res = authorized_client.post("/course/create",
                                  data={
                                     'email': 'admin1@korse.com',
