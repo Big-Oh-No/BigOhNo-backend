@@ -88,6 +88,10 @@ class OneStudentCourse(BaseModel):
     role: user_model.RoleEnum
     meta: Course
     assignments: List[StudentAssignments]
+    teacher_email: str
+    teacher_profile_url: Optional[str]
+    teacher_office: Optional[str]
+    teacher_contact: Optional[str]
 
     class Config:
         from_attributes = True
@@ -118,6 +122,11 @@ class OneTeacherCourse(BaseModel):
     role: user_model.RoleEnum
     meta: Course
     assignments: List[TeacherAssignments]
+    teacher_email: str
+    teacher_profile_url: Optional[str]
+    teacher_office: Optional[str]
+    teacher_contact: Optional[str]
+
 
     class Config:
         from_attributes = True
