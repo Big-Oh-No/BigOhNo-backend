@@ -362,3 +362,48 @@ def test_verified_admin_1(session):
     session.refresh(admin)
 
     return admin
+
+@pytest.fixture
+def test_assignment(session, test_courses):
+    assignment_1 = course_model.Assignment(
+        title="Intro to Computing",
+        file_url="htttp://0.0.0.0:8000/data/assignment/test.txt",
+        deadline="2024-04-30 23:59:00.0-07",
+        total_grade="100",
+        course_id = test_courses[0].id
+    )
+    assignment_2 = course_model.Assignment(
+        title="Intro to Computing 2",
+        file_url="htttp://0.0.0.0:8000/data/assignment/test.txt",
+        deadline="2024-04-30 23:59:00.0-07",
+        total_grade="50",
+        course_id = test_courses[0].id
+    )
+
+    session.add(assignment_1)
+    session.add(assignment_2)
+    session.commit()
+
+    return [assignment_1, assignment_2]
+
+@pytest.fixture
+def test_submission(session, test_assignment, test_verified_student_1):
+    submission_1 = course_model.Submission(
+        grade=90,
+        file_url="http://0.0.0.0:8000/data/submission/test.txt",
+        assignment_id=test_assignment[0].id,
+        student_id=test_verified_student_1.id
+    )
+
+    submission_2 = course_model.Submission(
+        grade=90,
+        file_url="http://0.0.0.0:8000/data/submission/test.txt",
+        assignment_id=test_assignment[1].id,
+        student_id=test_verified_student_1.id
+    )
+
+    session.add(submission_1)
+    session.add(submission_2)
+    session.commit()
+
+    return [submission_1, submission_2]

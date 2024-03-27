@@ -1,4 +1,5 @@
-from typing import Optional
+from datetime import date, datetime
+from typing import List, Optional
 from fastapi import UploadFile
 from pydantic import BaseModel
 from ..models import course_model
@@ -21,6 +22,22 @@ class Course(BaseModel):
 
     class Config:
         from_attributes = True
+
+    
+class StudentAssignments(BaseModel):
+    id: int
+    title: str
+    file_url: str
+    deadline: datetime
+    total_grade: float
+    published: datetime
+    grade: Optional[float]
+    file_url: Optional[str]
+    created_at: Optional[str]
+
+    class Config:
+        from_attributes = True
+
 
 class CourseStatusStudent(BaseModel):
     id: int
@@ -62,6 +79,42 @@ class CourseEnrollmentUpdate(BaseModel):
     student_id: int
     course_id: int
     comment: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+class OneStudentCourse(BaseModel):
+    meta: Course
+    assignments: List[StudentAssignments]
+
+    class Config:
+        from_attributes = True
+
+class OneStudentSubmission(BaseModel):
+    student_email: str
+    student_name: str
+    grade: Optional[float]
+    file_url: Optional[str]
+    created_at: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+class TeacherAssignments(BaseModel):
+    id: int
+    title: str
+    file_url: str
+    deadline: datetime
+    total_grade: float
+    published: datetime
+    responses: List[OneStudentSubmission]
+
+    class Config:
+        from_attributes = True
+
+class OneTeacherCourse(BaseModel):
+    meta: Course
+    assignments: List[TeacherAssignments]
 
     class Config:
         from_attributes = True

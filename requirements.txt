@@ -13,3 +13,4 @@ lxml
 pydantic-settings
 pytest
 httpx
+pytz

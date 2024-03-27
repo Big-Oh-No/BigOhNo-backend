@@ -10,6 +10,8 @@ def hash(password: str):
 
 def populatedb(db: Session = Depends(get_db)):
     # clear db
+    db.query(course_model.Submission).delete()
+    db.query(course_model.Assignment).delete()
     db.query(course_model.Enrollment).delete()
     db.query(course_model.Course).delete()
     db.query(user_model.Teacher).delete()
@@ -267,13 +269,73 @@ def populatedb(db: Session = Depends(get_db)):
         course_id=course_4.id,
         student_id=student_3.id
     )
+    enroll_5 = course_model.Enrollment(
+        status=course_model.StatusEnum.approved,
+        course_id=course_1.id,
+        student_id=student_2.id
+    )
 
     db.add(enroll_1)
     db.add(enroll_2)
     db.add(enroll_3)
     db.add(enroll_4)
+    db.add(enroll_5)
     db.commit()
     db.refresh(enroll_1)
     db.refresh(enroll_2)
     db.refresh(enroll_3)
     db.refresh(enroll_4)
+    db.refresh(enroll_5)
+
+    # add assignments
+    assignment_1 = course_model.Assignment(
+        title="Intro to Computing",
+        file_url="htttp://0.0.0.0:8000/data/assignment/test.txt",
+        deadline="2024-04-30 23:59:00.0-07",
+        total_grade="100",
+        course_id = course_1.id
+    )
+
+    assignment_2 = course_model.Assignment(
+        title="Intro to Computing 2",
+        file_url="htttp://0.0.0.0:8000/data/assignment/test.txt",
+        deadline="2024-04-30 23:59:00.0-07",
+        total_grade="50",
+        course_id = course_1.id
+    )
+
+    db.add(assignment_1)
+    db.add(assignment_2)
+    db.commit()
+    db.refresh(assignment_1)
+    db.refresh(assignment_2)
+
+
+    # add submissions
+    submission_1 = course_model.Submission(
+        grade=90,
+        file_url="http://0.0.0.0:8000/data/submission/test.txt",
+        assignment_id=assignment_1.id,
+        student_id=student_3.id
+    )
+
+    submission_2 = course_model.Submission(
+        grade=50,
+        file_url="http://0.0.0.0:8000/data/submission/test.txt",
+        assignment_id=assignment_2.id,
+        student_id=student_3.id
+    )
+
+    submission_3 = course_model.Submission(
+        file_url="http://0.0.0.0:8000/data/submission/test.txt",
+        assignment_id=assignment_1.id,
+        student_id=student_2.id
+    )
+
+    db.add(submission_1)
+    db.add(submission_2)
+    db.add(submission_3)
+    db.commit()
+    db.refresh(submission_1)
+    db.refresh(submission_2)
+    db.refresh(submission_3)
