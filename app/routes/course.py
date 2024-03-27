@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, asc, func, or_
@@ -21,11 +22,230 @@ HOST = "0.0.0.0"
 #     except socket.error as e:
 #         print("Socket error:", e)
 #         return None
-    
+
+
+def is_past_deadline(deadline_str):
+    # Extract datetime and timezone offset parts
+    datetime_str, offset_str = deadline_str.rsplit('-', 1)
+
+    # Convert string datetime to a datetime object
+    deadline_datetime = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S.%f")
+
+    # Extract timezone offset hours and minutes
+    offset_hours = int(offset_str[:3])
+    offset_minutes = int(offset_str[-2:])
+
+    # Calculate the total offset in minutes
+    total_offset_minutes = offset_hours * 60 + offset_minutes
+
+    # Create a timedelta object for the timezone offset
+    timezone_offset = timedelta(minutes=total_offset_minutes)
+
+    # Get the current time in PST timezone
+    current_time_pst = datetime.now() - timedelta(hours=7)
+
+    # Adjust the deadline datetime to match the current timezone
+    deadline_datetime_adjusted = deadline_datetime + timezone_offset
+
+    # Check if the current time is past the deadline time
+    return current_time_pst > deadline_datetime_adjusted
+
+
 router = APIRouter(
     prefix="/course",
     tags=["course"],
 )
+
+@router.post(
+        "/grade",
+        status_code=201
+)
+async def grade_assignment(
+    assignment_id: int = Form(...),
+    student_id: int = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+):
+    pass
+
+@router.post(
+    "/assignment",
+    status_code=201
+)
+async def create_assignment(
+    course_id: int = Form(...),
+    title: str = Form(...),
+    deadline: datetime = Form(...),
+    total_grade: float = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    assignment_file: Optional[UploadFile] = Form(None),
+    db: Session = Depends(get_db)
+):
+    """ create an assignment for a course """
+    
+    user = db.query(user_model.User).filter(and_(user_model.User.email == email,user_model.User.password == hash(password))).first()
+
+    if not user:
+       raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Wrong email and password combination"
+        )
+    
+    if user.role != user_model.RoleEnum.teacher:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User is not a teacher"
+        )
+    
+    teacher = db.query(user_model.Teacher).filter(user_model.Teacher.user_id == user.id).first()
+    if not teacher:
+        raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Teacher not found"
+        )
+    
+    course = db.query(course_model.Course).filter(course_model.Course.id == course_id).first()
+
+    if not course:
+        raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Course not found"
+        )
+    
+    if course.teacher_id != teacher.id:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Access Denied"
+        )
+    
+    unique_suffix = f"{course_id}{title}{teacher.id}{course.term}{course.year}"
+    assignment_url=None
+
+    if assignment_file and assignment_file.size != 0:
+        assignment_url = f"data/assignment/{unique_suffix}{assignment_file.filename}"
+        with open(assignment_url, "wb") as buffer:
+            contents = await assignment_file.read()
+            buffer.write(contents)
+    
+    
+    assignment_file_url = None
+
+    if assignment_url:
+        assignment_file_url = f"http://{HOST}:{PORT_DATA}/{assignment_url}"
+    
+    
+    assignment = course_model.Assignment(
+        title = title,
+        file_url = assignment_file_url,
+        deadline = deadline,
+        total_grade = total_grade,
+        course_id = course_id
+    )
+
+    db.add(assignment)
+    db.commit()
+    db.refresh(assignment)
+
+    return {"message": "assignment added successfully"}
+
+
+@router.post(
+    "/submit",
+    status_code=201
+)
+async def submit_assignment(
+    assignment_id: int = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    assignment_file: UploadFile = Form(...),
+    db: Session = Depends(get_db)
+):
+    """ create an submission for an assignment """
+    
+    user = db.query(user_model.User).filter(and_(user_model.User.email == email,user_model.User.password == hash(password))).first()
+
+    if not user:
+       raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Wrong email and password combination"
+        )
+    
+    if user.role != user_model.RoleEnum.student:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User is not a student"
+        )
+    
+    student = db.query(user_model.Student).filter(user_model.Student.user_id == user.id).first()
+    if not student:
+        raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Student not found"
+        )
+    
+    assignment = db.query(course_model.Assignment).filter(course_model.Assignment.id == assignment_id).first()
+    if not assignment:
+         raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Assignment not found"
+        )
+    
+    course = db.query(course_model.Course).filter(course_model.Course.id == assignment.course_id).first()
+    if not course:
+        raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Course not found"
+        )
+    
+    enrollment = db.query(course_model.Enrollment).filter(and_(course_model.Enrollment.student_id == student.id, course_model.Enrollment.course_id == course.id)).first()
+    if not enrollment or enrollment.status != course_model.StatusEnum.approved:
+            raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access Denied"
+            )
+    
+    if is_past_deadline(assignment.deadline):
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="Deadline passed"
+            )
+
+    unique_suffix = f"{assignment_id}{student.id}{user.email}{course.term}{course.year}"
+    assignment_url=None
+
+    if assignment_file and assignment_file.size != 0:
+        assignment_url = f"data/submission/{unique_suffix}{assignment_file.filename}"
+        with open(assignment_url, "wb") as buffer:
+            contents = await assignment_file.read()
+            buffer.write(contents)
+    
+    
+    assignment_file_url = None
+
+    if assignment_url:
+        assignment_file_url = f"http://{HOST}:{PORT_DATA}/{assignment_url}"
+    
+    submission = db.query(course_model.Submission).filter(and_(course_model.Submission.assignment_id == assignment_id, course_model.Submission.student_id == student.id)).first()
+    if submission:
+        submission.file_url = assignment_file_url
+        submission.created_at = datetime.now()
+        db.commit()
+        db.refresh(submission)
+        return {"message" : "submission updated successfully"}
+
+    assignment = course_model.Submission(
+        file_url = assignment_file_url,
+        assignment_id = assignment_id,
+        student_id = student.id
+    )
+
+    db.add(assignment)
+    db.commit()
+    db.refresh(assignment)
+
+    return {"message": "submission added successfully"}
+
 
 @router.post(
     "/teacher",
@@ -617,7 +837,7 @@ async def get_courses(
     id: int,
     db: Session = Depends(get_db),    
 ):
-    """ returns all active courses """
+    """ returns a single course details """
 
     user = db.query(user_model.User).filter(and_(user_model.User.email == user.email,user_model.User.password == hash(user.password))).first()
 
@@ -674,7 +894,6 @@ async def get_courses(
                 course_model.Assignment.total_grade,
                 func.to_char(course_model.Assignment.published, 'YYYY-MM-DD HH24:MI:SS').label('published'),
                 course_model.Submission.grade,
-                course_model.Submission.file_url,
                 func.to_char(course_model.Submission.created_at, 'YYYY-MM-DD HH24:MI:SS').label('created_at'),
             )
             .join(course_model.Submission, course_model.Assignment.id == course_model.Submission.assignment_id)
@@ -788,3 +1007,4 @@ async def get_courses(
             status_code=status.HTTP_409_CONFLICT,
             detail="Admins can't view course submissions"
             )
+
