@@ -290,7 +290,7 @@ def populatedb(db: Session = Depends(get_db)):
     # add assignments
     assignment_1 = course_model.Assignment(
         title="Intro to Computing",
-        file_url="htttp://0.0.0.0:8000/data/assignment/test.txt",
+        file_url="http://0.0.0.0:8000/data/assignment/test.txt",
         deadline="2024-04-30 23:59:00.0-07",
         total_grade="100",
         course_id = course_1.id
@@ -298,7 +298,7 @@ def populatedb(db: Session = Depends(get_db)):
 
     assignment_2 = course_model.Assignment(
         title="Intro to Computing 2",
-        file_url="htttp://0.0.0.0:8000/data/assignment/test.txt",
+        file_url="http://0.0.0.0:8000/data/assignment/test.txt",
         deadline="2024-04-30 23:59:00.0-07",
         total_grade="50",
         course_id = course_1.id

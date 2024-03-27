@@ -700,7 +700,11 @@ async def get_courses(
                 status=course.status,
                 teacher_name=f"{teacher_profile.first_name} {teacher_profile.last_name}"
             ),
-            assignments=assigments
+            assignments=assigments,
+            teacher_email=teacher_profile.email,
+            teacher_profile_url=teacher_profile.profile_image,
+            teacher_office=teacher.office,
+            teacher_contact=teacher.contact
         )
 
         return response
@@ -770,7 +774,12 @@ async def get_courses(
                 status=course.status,
                 teacher_name=f"{teacher_profile.first_name} {teacher_profile.last_name}"
             ),
-            assignments = list_of_submission
+            assignments = list_of_submission,
+            teacher_email=teacher_profile.email,
+            teacher_profile_url=teacher_profile.profile_image,
+            teacher_office=teacher.office,
+            teacher_contact=teacher.contact
+
         )   
         
         return response
