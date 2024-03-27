@@ -1,5 +1,5 @@
 from .user_model import User, Teacher, Admin, Student
-from .course_model import Enrollment, Course
+from .course_model import Enrollment, Course, Assignment
 from ..utils.db import Base
 
 user = User()
@@ -8,3 +8,4 @@ teacher = Teacher()
 student = Student()
 course = Course()
 enrollment = Enrollment()
+assignment = Assignment()

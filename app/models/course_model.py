@@ -1,6 +1,6 @@
 from ..utils.db import Base
 from .user_model import Student, Teacher
-from sqlalchemy import Column, ForeignKey, Integer, String, TIMESTAMP, Enum
+from sqlalchemy import Column, ForeignKey, Integer, String, TIMESTAMP, Enum, Double, DATETIME
 from sqlalchemy.sql.expression import text
 from sqlalchemy.orm import relationship
 import enum
@@ -62,7 +62,34 @@ class Enrollment(Base):
     course = relationship("Course", back_populates="enrollment")
     student = relationship("Student", back_populates="enrollment")
 
+class Assignment(Base):
+    __tablename__ = "assignment"
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    title = Column(String, nullable=False)
+    file_url = Column(String, nullable=False)
+    deadline = Column(TIMESTAMP, nullable=False)
+    total_grade = Column(Double, nullable=False)
+    published = Column(TIMESTAMP(timezone=True), server_default=text("now()"), nullable=False)
+    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
+
+    course = relationship("Course", back_populates="assignment")
+
+class Submission(Base):
+    __tablename__ = "submission"
+    grade = Column(Double)
+    file_url = Column(String, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"), nullable=False)
+
+    assignment_id = Column(Integer, ForeignKey('assignment.id'), primary_key=True, nullable=False)
+    student_id = Column(Integer, ForeignKey('student.id'), primary_key=True, nullable=False)
+
+    assignment = relationship("Assignment", back_populates="submission")
+    student = relationship("Student", back_populates="submission")
 
 Teacher.course= relationship("Course", back_populates="teacher")
 Course.enrollment = relationship("Enrollment", back_populates="course")
 Student.enrollment = relationship("Enrollment", back_populates="student")
+
+Course.assignment = relationship("Assignment", back_populates="course")
+Assignment.submission = relationship("Submission", back_populates="assignment")
+Student.submission = relationship("Submission", back_populates="student")
