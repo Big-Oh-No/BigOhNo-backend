@@ -3,6 +3,7 @@ from typing import List, Optional
 from fastapi import UploadFile
 from pydantic import BaseModel
 from ..models import course_model
+from ..models import user_model
 
 class Course(BaseModel):
     id: int
@@ -84,6 +85,7 @@ class CourseEnrollmentUpdate(BaseModel):
         from_attributes = True
 
 class OneStudentCourse(BaseModel):
+    role: user_model.RoleEnum
     meta: Course
     assignments: List[StudentAssignments]
 
@@ -113,6 +115,7 @@ class TeacherAssignments(BaseModel):
         from_attributes = True
 
 class OneTeacherCourse(BaseModel):
+    role: user_model.RoleEnum
     meta: Course
     assignments: List[TeacherAssignments]
 

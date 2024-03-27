@@ -683,6 +683,7 @@ async def get_courses(
         )
 
         response = course_schema.OneStudentCourse(
+            role=user_model.RoleEnum.student,
             meta=course_schema.Course(
                 id=course.id,
                 dept=course.dept,
@@ -752,6 +753,7 @@ async def get_courses(
             )
 
         response = course_schema.OneTeacherCourse(
+            role=user_model.RoleEnum.teacher,
             meta = course_schema.Course(
                 id=course.id,
                 dept=course.dept,
