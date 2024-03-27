@@ -71,6 +71,9 @@ class Assignment(Base):
     total_grade = Column(Double, nullable=False)
     published = Column(DATETIME, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
 
+    course = relationship("Course", back_populates="assignment")
+    student = relationship("Student", back_populates="assignment")
+
 
 
 
