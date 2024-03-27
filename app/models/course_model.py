@@ -1,6 +1,6 @@
 from ..utils.db import Base
 from .user_model import Student, Teacher
-from sqlalchemy import Column, ForeignKey, Integer, String, TIMESTAMP, Enum
+from sqlalchemy import Column, ForeignKey, Integer, String, TIMESTAMP, Enum, Double, DATETIME
 from sqlalchemy.sql.expression import text
 from sqlalchemy.orm import relationship
 import enum
@@ -61,6 +61,17 @@ class Enrollment(Base):
 
     course = relationship("Course", back_populates="enrollment")
     student = relationship("Student", back_populates="enrollment")
+
+class Assignment(Base):
+    __tablename__ = "assignment"
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    title = Column(String, nullable=False)
+    file_url = Column(String)
+    deadline = Column(DATETIME, nullable=False)
+    total_grade = Column(Double, nullable=False)
+    published = Column(DATETIME, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+
+
 
 
 Teacher.course= relationship("Course", back_populates="teacher")
