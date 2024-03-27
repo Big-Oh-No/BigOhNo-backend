@@ -7,7 +7,11 @@ venv
 data/courseimg/*
 data/syllabus/*
 data/profile/*
+data/assignment/*
+data/submission/*
 
 !data/courseimg/__init__
 !data/syllabus/__init__
 !data/profile/__init__
+!data/assignment/test.txt
+!data/submission/test.txt

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, asc, or_
+from sqlalchemy import and_, asc, func, or_
 from ..utils.db import get_db
 from ..utils.utils import hash
 from ..models import user_model, course_model
@@ -605,3 +605,177 @@ async def create(
     db.refresh(course_entry)
 
     return {"message": "course added successfully"}
+
+
+@router.post(
+    "/{id}",
+    status_code=200,
+    response_model=course_schema.OneStudentCourse | course_schema.OneTeacherCourse
+)
+async def get_courses(
+    user: user_schema.UserSignIn,
+    id: int,
+    db: Session = Depends(get_db),    
+):
+    """ returns all active courses """
+
+    user = db.query(user_model.User).filter(and_(user_model.User.email == user.email,user_model.User.password == hash(user.password))).first()
+
+    if not user:
+       raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Wrong email and password combination"
+        )
+    
+    course = db.query(course_model.Course).filter(course_model.Course.id == id).first()
+    if not course:
+        raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Course not found"
+        )
+    
+    teacher = db.query(user_model.Teacher).filter(user_model.Teacher.id == course.teacher_id).first()
+    if not teacher:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Teacher not found"
+            )
+    
+    teacher_profile = db.query(user_model.User).filter(user_model.User.id == teacher.user_id).first()
+    if not teacher_profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+            )
+    
+    if user.role == user_model.RoleEnum.student:
+        student = db.query(user_model.Student).filter(user_model.Student.user_id == user.id).first()
+        
+        if not student:
+            raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Student not found"
+            )
+        
+        enrollment = db.query(course_model.Enrollment).filter(and_(course_model.Enrollment.student_id == student.id, course_model.Enrollment.course_id == course.id)).first()
+        if not enrollment or enrollment.status != course_model.StatusEnum.approved:
+            raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access Denied"
+            )
+        
+        assigments = (
+            db
+            .query(
+                course_model.Assignment.id,
+                course_model.Assignment.title,
+                course_model.Assignment.file_url,
+                func.to_char(course_model.Assignment.deadline, 'YYYY-MM-DD HH24:MI:SS').label('deadline'),
+                course_model.Assignment.total_grade,
+                func.to_char(course_model.Assignment.published, 'YYYY-MM-DD HH24:MI:SS').label('published'),
+                course_model.Submission.grade,
+                course_model.Submission.file_url,
+                func.to_char(course_model.Submission.created_at, 'YYYY-MM-DD HH24:MI:SS').label('created_at'),
+            )
+            .join(course_model.Submission, course_model.Assignment.id == course_model.Submission.assignment_id)
+            .filter(and_(course_model.Assignment.course_id == course.id, course_model.Submission.student_id == student.id))
+            .all()
+        )
+
+        response = course_schema.OneStudentCourse(
+            role=user_model.RoleEnum.student,
+            meta=course_schema.Course(
+                id=course.id,
+                dept=course.dept,
+                code=course.code,
+                name=course.name,
+                description=course.description,
+                syllabus_url=course.syllabus_url,
+                image_url=course.image_url,
+                term=course.term,
+                year=course.year,
+                credits=course.credits,
+                total_seats=course.total_seats,
+                taken_seats=course.taken_seats,
+                status=course.status,
+                teacher_name=f"{teacher_profile.first_name} {teacher_profile.last_name}"
+            ),
+            assignments=assigments
+        )
+
+        return response
+
+
+    if user.role == user_model.RoleEnum.teacher:
+
+        assigments = (
+            db
+            .query(
+                course_model.Assignment.id,
+                course_model.Assignment.title,
+                course_model.Assignment.file_url,
+                func.to_char(course_model.Assignment.deadline, 'YYYY-MM-DD HH24:MI:SS').label('deadline'),
+                course_model.Assignment.total_grade,
+                func.to_char(course_model.Assignment.published, 'YYYY-MM-DD HH24:MI:SS').label('published'),
+            )
+            .filter(course_model.Assignment.course_id == course.id)
+            .all()
+        )
+        
+        list_of_submission = []
+
+        for assignment in assigments:
+            res = (
+                db
+                .query(
+                    course_model.Submission.grade,
+                    course_model.Submission.file_url,
+                    func.to_char(course_model.Submission.created_at, 'YYYY-MM-DD HH24:MI:SS').label('created_at'),
+                    user_model.User.email.label("student_email"),
+                    (user_model.User.first_name + ' ' + user_model.User.last_name).label("student_name")
+                )
+                .join(user_model.Student, user_model.Student.id == course_model.Submission.student_id)
+                .join(user_model.User, user_model.User.id == user_model.Student.user_id)
+                .filter(course_model.Submission.assignment_id == assignment.id)
+                .all()
+            )
+        
+            list_of_submission.append(
+                course_schema.TeacherAssignments(
+                    id=assignment.id,
+                    title=assignment.title,
+                    file_url=assignment.file_url,
+                    deadline=assignment.deadline,
+                    total_grade=assignment.total_grade,
+                    published=assignment.published,
+                    responses=res
+                )
+            )
+
+        response = course_schema.OneTeacherCourse(
+            role=user_model.RoleEnum.teacher,
+            meta = course_schema.Course(
+                id=course.id,
+                dept=course.dept,
+                code=course.code,
+                name=course.name,
+                description=course.description,
+                syllabus_url=course.syllabus_url,
+                image_url=course.image_url,
+                term=course.term,
+                year=course.year,
+                credits=course.credits,
+                total_seats=course.total_seats,
+                taken_seats=course.taken_seats,
+                status=course.status,
+                teacher_name=f"{teacher_profile.first_name} {teacher_profile.last_name}"
+            ),
+            assignments = list_of_submission
+        )   
+        
+        return response
+    
+    raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Admins can't view course submissions"
+            )
