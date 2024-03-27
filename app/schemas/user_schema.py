@@ -1,4 +1,5 @@
 from typing import Optional
+from fastapi import UploadFile
 from pydantic import BaseModel
 from ..models import user_model, course_model
 
@@ -82,6 +83,31 @@ class UserVerificationRequest(BaseModel):
     email: str
     password: str
     user_email: str
+
+    class Config:
+        from_attributes = True
+    
+class UserEditProfileRequest(BaseModel):
+    email: str
+    password: str
+    
+    # common
+    bio: Optional[str]
+    gender: Optional[user_model.GenderEnum]
+    pronouns: Optional[str]
+    profile_image: Optional[UploadFile]
+
+    # admin and teacher
+    contact: Optional[str]
+    office: Optional[str]
+
+    # student
+    department: Optional[user_model.DepartmentEnum]
+    year: Optional[int]
+    degree: Optional[user_model.DegreeEnum]
+
+    # teacher
+    faculty: Optional[str]
 
     class Config:
         from_attributes = True
