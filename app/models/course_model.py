@@ -80,6 +80,8 @@ class Assignment(Base):
 Teacher.course= relationship("Course", back_populates="teacher")
 Course.enrollment = relationship("Enrollment", back_populates="course")
 Student.enrollment = relationship("Enrollment", back_populates="student")
+
 Course.assignment = relationship("Assignment", back_populates="course")
-Student.assignment = relationship("Student", back_populates="student")
+Student.assignment = relationship("Student", back_populates="assignment")
+
 
