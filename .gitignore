@@ -3,7 +3,11 @@ __pycache__
 .pytest_cache
 venv
 .venv
+
 data/courseimg/*
 data/syllabus/*
+data/profile/*
+
 !data/courseimg/__init__
 !data/syllabus/__init__
+!data/profile/__init__
