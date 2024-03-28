@@ -4,7 +4,7 @@ def test_create_assignment(authorized_client, test_verified_teacher, test_course
     file_path = "assets/file_test.txt"
 
     data={
-        'course_id': 1,
+        'course_id': test_courses[0].id,
         'title': 'New Assignment',
         'deadline': "2024-12-31",
         'total_grade': 100,
