@@ -56,17 +56,51 @@ router = APIRouter(
     tags=["course"],
 )
 
-@router.post(
+@router.patch(
         "/grade",
         status_code=201
 )
 async def grade_assignment(
     assignment_id: int = Form(...),
     student_id: int = Form(...),
+    grade: float = Form(...),
     email: str = Form(...),
     password: str = Form(...),
+    db: Session = Depends(get_db)
 ):
-    pass
+    """ grades an assignment """
+    user = db.query(user_model.User).filter(and_(user_model.User.email == email,user_model.User.password == hash(password))).first()
+
+    if not user:
+       raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Wrong email and password combination"
+        )
+    
+    if user.role != user_model.RoleEnum.teacher:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User is not a teacher"
+        )
+    
+    if not user.verified:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User is not verified"
+        )
+    
+    submission = db.query(course_model.Submission).filter(and_(course_model.Submission.assignment_id == assignment_id, course_model.Submission.student_id == student_id)).first()
+    if not submission:
+         raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Submission not found"
+        )
+    
+    submission.grade = grade
+    db.commit()
+    db.refresh(submission)
+
+    return {"message": "Submission graded successfully"}
 
 @router.post(
     "/assignment",
