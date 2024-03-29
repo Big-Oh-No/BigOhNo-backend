@@ -62,7 +62,7 @@ router = APIRouter(
 )
 async def grade_assignment(
     assignment_id: int = Form(...),
-    student_id: int = Form(...),
+    student_email: str = Form(...),
     grade: float = Form(...),
     email: str = Form(...),
     password: str = Form(...),
@@ -89,7 +89,21 @@ async def grade_assignment(
             detail="User is not verified"
         )
     
-    submission = db.query(course_model.Submission).filter(and_(course_model.Submission.assignment_id == assignment_id, course_model.Submission.student_id == student_id)).first()
+    user_student = db.query(user_model.User).filter(user_model.User.email == student_email).first()
+    if not user_student or user_student.role != user_model.RoleEnum.student:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Invalid student"
+        )
+    
+    student = db.query(user_model.Student).filter(user_model.Student.user_id == user_student.id).first()
+    if not student:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Invalid student"
+        )
+    
+    submission = db.query(course_model.Submission).filter(and_(course_model.Submission.assignment_id == assignment_id, course_model.Submission.student_id == student.id)).first()
     if not submission:
          raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -238,12 +252,18 @@ async def submit_assignment(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Access Denied"
             )
-    
-    if is_past_deadline(assignment.deadline):
-        raise HTTPException(
+    if type(assignment.deadline) == str:
+        if is_past_deadline(assignment.deadline):
+            raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail="Deadline passed"
-            )
+            )  
+    else:
+        if datetime.now() > assignment.deadline:
+            raise HTTPException(
+                status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                detail="Deadline passed"
+                )
 
     unique_suffix = f"{assignment_id}{student.id}{user.email}{course.term}{course.year}"
     assignment_url=None
@@ -927,13 +947,37 @@ async def get_courses(
                 func.to_char(course_model.Assignment.deadline, 'YYYY-MM-DD HH24:MI:SS').label('deadline'),
                 course_model.Assignment.total_grade,
                 func.to_char(course_model.Assignment.published, 'YYYY-MM-DD HH24:MI:SS').label('published'),
-                course_model.Submission.grade,
-                func.to_char(course_model.Submission.created_at, 'YYYY-MM-DD HH24:MI:SS').label('created_at'),
             )
-            .join(course_model.Submission, course_model.Assignment.id == course_model.Submission.assignment_id)
-            .filter(and_(course_model.Assignment.course_id == course.id, course_model.Submission.student_id == student.id))
+            # .join(course_model.Submission, course_model.Assignment.id == course_model.Submission.assignment_id)
+            .filter(course_model.Assignment.course_id == course.id)
             .all()
         )
+
+        assignments_data = []
+        for i in assigments:
+            submission = db.query(course_model.Submission.grade, func.to_char(course_model.Submission.created_at, 'YYYY-MM-DD HH24:MI:SS').label('created_at')).filter(and_(course_model.Submission.assignment_id == i.id, course_model.Submission.student_id == student.id)).first()
+            if not submission:
+                assignments_data.append(course_schema.StudentAssignments(
+                id=i.id,
+                title=i.title,
+                file_url=i.file_url,
+                deadline=i.deadline,
+                total_grade=i.total_grade,
+                published=i.published,
+                grade=None,
+                created_at=None,
+            ))
+                continue
+            assignments_data.append(course_schema.StudentAssignments(
+                id=i.id,
+                title=i.title,
+                file_url=i.file_url,
+                deadline=i.deadline,
+                total_grade=i.total_grade,
+                published=i.published,
+                grade=submission.grade,
+                created_at=submission.created_at,
+            ))
 
         response = course_schema.OneStudentCourse(
             role=user_model.RoleEnum.student,
@@ -953,7 +997,7 @@ async def get_courses(
                 status=course.status,
                 teacher_name=f"{teacher_profile.first_name} {teacher_profile.last_name}"
             ),
-            assignments=assigments,
+            assignments=assignments_data,
             teacher_email=teacher_profile.email,
             teacher_profile_url=teacher_profile.profile_image,
             teacher_office=teacher.office,
