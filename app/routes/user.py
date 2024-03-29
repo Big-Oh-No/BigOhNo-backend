@@ -385,35 +385,3 @@ async def edit_profile(
         db.refresh(admin)
 
     return {"message": "User Profile Updated Successfully"}
-
-
-@router.post(
-    "/deactivate_course",
-    status_code=200,
-)
-async def deactivate_course(
-    email: str,
-    password: str,
-    course_id: int,
-    db: Session = Depends(get_db),
-):
-    """Check if valid user is admin"""
-
-    admin = db.query(user_model.User).filter(user_model.User.email == email, user_model.User.password == hash(password), user_model.User.verified == True, user_model.User.role == user_model.RoleEnum.admin).first()
-    if not admin:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not verified"
-            )
-    """Check if course exists"""
-    course = db.query(course_model.Course).filter(course_model.Course.id == course_id).first()
-    if not course:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found",
-        )
-    course.status = course_model.CourseStatusEnum.closed
-    db.commit()
-    db.refresh(course)
-
-    return {"Message" : "Course deacitvated successfully"}

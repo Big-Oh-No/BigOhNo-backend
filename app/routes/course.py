@@ -51,10 +51,52 @@ def is_past_deadline(deadline_str):
     return current_time_pst > deadline_datetime_adjusted
 
 
+
 router = APIRouter(
     prefix="/course",
     tags=["course"],
 )
+
+
+@router.post(
+    "/deactivate",
+    status_code=200,
+)
+async def deactivate_course(
+    email: str = Form(...),
+    password: str = Form(...),
+    course_id: int = Form(...),
+    db: Session = Depends(get_db),
+):
+    """ deactivates a course """
+
+    user = db.query(user_model.User).filter(and_(user_model.User.email == email, user_model.User.password == hash(password))).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Wrong Password and Email Combination"
+        )
+    
+    if not user.verified or user.role != user_model.RoleEnum.admin:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not allowed"
+        )
+    
+    course = db.query(course_model.Course).filter(course_model.Course.id == course_id).first()
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found",
+        )
+    
+    course.status = course_model.CourseStatusEnum.closed
+    db.commit()
+    db.refresh(course)
+
+    return {"Message" : "Course deacitvated successfully"}
+
 
 @router.patch(
         "/grade",
