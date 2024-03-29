@@ -33,7 +33,6 @@ class StudentAssignments(BaseModel):
     total_grade: float
     published: datetime
     grade: Optional[float]
-    file_url: Optional[str]
     created_at: Optional[str]
 
     class Config:
