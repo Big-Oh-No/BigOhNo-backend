@@ -1,7 +1,7 @@
 from fastapi import Depends, FastAPI
 from .utils.db import get_db
 from sqlalchemy.orm import Session
-from .routes import user, course
+from .routes import user, course, discussion
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from app.config import settings
@@ -27,6 +27,7 @@ app.add_middleware(
 
 app.include_router(user.router)  
 app.include_router(course.router) 
+app.include_router(discussion.router) 
 
 app.mount("/data", StaticFiles(directory="data"), name="data")
 
