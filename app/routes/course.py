@@ -412,6 +412,14 @@ async def get_courses(
             detail="Wrong email and password combination"
         )
     
+    if not user.verified:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User is not verified"
+        )
+    
+    
+    
     courses = (
         db.query(
             course_model.Course.id,
@@ -434,6 +442,44 @@ async def get_courses(
         .filter(course_model.Course.status == course_model.CourseStatusEnum.active)
         .all()
     )
+
+    if user.role == user_model.RoleEnum.student:
+        student = db.query(user_model.Student).filter(user_model.Student.user_id == user.id).first()
+
+        if not student:
+            raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Unexpected error occured"
+        )
+
+        enrollment = db.query(course_model.Enrollment.course_id).filter(and_(course_model.Enrollment.student_id == student.id, course_model.Enrollment.status == course_model.StatusEnum.approved)).all()
+        enrollment_data = []
+        for i in enrollment:
+            enrollment_data.append(i.course_id)
+
+        result = []
+
+        for course in courses:
+            if course.id not in enrollment_data:
+                result.append(course_schema.Course(
+                    id=course.id,
+                    dept=course.dept,
+                    code=course.code,
+                    name=course.name,
+                    description=course.description,
+                    syllabus_url=course.syllabus_url,
+                    image_url=course.image_url,
+                    term=course.term,
+                    year=course.year,
+                    credits=course.credits,
+                    total_seats=course.total_seats,
+                    taken_seats=course.taken_seats,
+                    status=course.status,
+                    teacher_name=f"{course.first_name} {course.last_name}"
+                ))
+        
+        return result
+        
 
     result = []
 
