@@ -5,8 +5,8 @@ def test_get_courses(authorized_client, test_courses):
     assert res.status_code == 200
     assert len(res.json()) == 4
 
-def test_get_course_with_differnt_role(authorized_client, test_courses, test_verified_user):
-    res = authorized_client.post("/course/",json={'email': 'student@gmail.com', 'password': 'password'})
+def test_get_course_with_differnt_role(authorized_client, test_courses, test_verified_student_1):
+    res = authorized_client.post("/course/",json={'email': 'student1@korse.com', 'password': 'password'})
     assert res.status_code == 200
     assert len(res.json()) == 4
 
