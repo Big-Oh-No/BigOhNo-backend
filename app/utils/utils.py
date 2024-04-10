@@ -71,9 +71,9 @@ def populatedb(db: Session = Depends(get_db)):
         )
     
     user_5 = user_model.User(
-        first_name = "John",
-        last_name = "Doe",
-        bio = "I am an admin.",
+        first_name = "Chad",
+        last_name = "Davis",
+        bio = "I am a passionate e-learning administrator dedicated to optimizing online learning experiences.",
         email = "admin@korse.com",
         password = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", # password
         gender = user_model.GenderEnum.male,
@@ -84,15 +84,16 @@ def populatedb(db: Session = Depends(get_db)):
     )
 
     user_6 = user_model.User(
-        first_name = "July",
-        last_name = "Frost",
-        bio = "I am a teacher.",
+        first_name = "Gema",
+        last_name = "Rodríguez-Pérez",
+        bio = "I love empirical software studies that mine open source software repositories to create large datasets.",
         email = "teacher@korse.com",
         password = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", # password
         gender = user_model.GenderEnum.female,
         pronouns = "She/Her",
         role = user_model.RoleEnum.teacher,
-        verified = True
+        verified = True,
+        profile_image='http://localhost:8000/data/profile/teacher_pfp.png'
     )
     
     user_7 = user_model.User(
@@ -104,7 +105,8 @@ def populatedb(db: Session = Depends(get_db)):
         gender = user_model.GenderEnum.male,
         pronouns = "He/Him/His",
         role = user_model.RoleEnum.student,
-        verified = True
+        verified = True,
+        profile_image='http://localhost:8000/data/profile/student_pfp.png'
     )
 
     db.add(user_1)
@@ -200,7 +202,9 @@ def populatedb(db: Session = Depends(get_db)):
         total_seats=100,
         taken_seats=1,
         status=course_model.CourseStatusEnum.active,
-        teacher_id = teacher_2.id
+        teacher_id = teacher_2.id,
+        image_url = 'http://localhost:8000/data/courseimg/cs111.png',
+        syllabus_url = 'http://localhost:8000/data/syllabus/cs111.pdf'
     )
     course_2 = course_model.Course(
         dept=course_model.DeptEnum.stat,
@@ -213,7 +217,8 @@ def populatedb(db: Session = Depends(get_db)):
         total_seats=60,
         taken_seats=1,
         status=course_model.CourseStatusEnum.active,
-        teacher_id = teacher_2.id
+        teacher_id = teacher_2.id,
+        image_url = 'http://localhost:8000/data/courseimg/stat230.png'
     )
     course_3 = course_model.Course(
         dept=course_model.DeptEnum.stat,
@@ -225,7 +230,8 @@ def populatedb(db: Session = Depends(get_db)):
         credits=3,
         total_seats=30,
         status=course_model.CourseStatusEnum.active,
-        teacher_id = teacher_2.id
+        teacher_id = teacher_2.id,
+        image_url = 'http://localhost:8000/data/courseimg/stat303.png'
     )
     course_4 = course_model.Course(
         dept=course_model.DeptEnum.phys,
@@ -237,7 +243,8 @@ def populatedb(db: Session = Depends(get_db)):
         credits=3,
         total_seats=30,
         status=course_model.CourseStatusEnum.active,
-        teacher_id = teacher_1.id
+        teacher_id = teacher_1.id,
+        image_url = 'http://localhost:8000/data/courseimg/phys304.png'
     )
 
     db.add(course_1)

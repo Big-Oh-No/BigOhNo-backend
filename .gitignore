@@ -11,8 +11,17 @@ data/assignment/*
 data/submission/*
 
 !data/courseimg/__init__
+!data/courseimg/cs111.png
+!data/courseimg/stat230.png
+!data/courseimg/stat303.png
+!data/courseimg/phys304.png
+
+!data/syllabus/cs111.pdf
+
 !data/syllabus/__init__
 !data/profile/__init__
 !data/profile/admin_pfp.png
+!data/profile/teacher_pfp.png
+!data/profile/student_pfp.png
 !data/assignment/test.txt
 !data/submission/test.txt
