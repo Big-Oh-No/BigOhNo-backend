@@ -13,5 +13,6 @@ data/submission/*
 !data/courseimg/__init__
 !data/syllabus/__init__
 !data/profile/__init__
+!data/profile/admin_pfp.png
 !data/assignment/test.txt
 !data/submission/test.txt

@@ -3,13 +3,15 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 from hashlib import sha256
 
-from ..models import user_model, course_model
+from ..models import user_model, course_model, disscussion_model
 
 def hash(password: str):
     return sha256(password.encode('utf-8')).hexdigest()
 
 def populatedb(db: Session = Depends(get_db)):
     # clear db
+    db.query(disscussion_model.Message).delete()
+    db.query(disscussion_model.Discussion).delete()
     db.query(course_model.Submission).delete()
     db.query(course_model.Assignment).delete()
     db.query(course_model.Enrollment).delete()
@@ -77,7 +79,8 @@ def populatedb(db: Session = Depends(get_db)):
         gender = user_model.GenderEnum.male,
         pronouns = "He/Him/His",
         role = user_model.RoleEnum.admin,
-        verified = True
+        verified = True,
+        profile_image='http://localhost:8000/data/profile/admin_pfp.png'
     )
 
     user_6 = user_model.User(
