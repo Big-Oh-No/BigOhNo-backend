@@ -268,17 +268,17 @@ def populatedb(db: Session = Depends(get_db)):
         course_id=course_2.id,
         student_id=student_3.id
     )
-    enroll_3 = course_model.Enrollment(
-        status=course_model.StatusEnum.pending,
-        course_id=course_3.id,
-        student_id=student_3.id
-    )
-    enroll_4 = course_model.Enrollment(
-        comment="Your preqs don't match.",
-        status=course_model.StatusEnum.declined,
-        course_id=course_4.id,
-        student_id=student_3.id
-    )
+    # enroll_3 = course_model.Enrollment(
+    #     status=course_model.StatusEnum.pending,
+    #     course_id=course_3.id,
+    #     student_id=student_3.id
+    # )
+    # enroll_4 = course_model.Enrollment(
+    #     comment="Your preqs don't match.",
+    #     status=course_model.StatusEnum.declined,
+    #     course_id=course_4.id,
+    #     student_id=student_3.id
+    # )
     enroll_5 = course_model.Enrollment(
         status=course_model.StatusEnum.approved,
         course_id=course_1.id,
@@ -287,14 +287,14 @@ def populatedb(db: Session = Depends(get_db)):
 
     db.add(enroll_1)
     db.add(enroll_2)
-    db.add(enroll_3)
-    db.add(enroll_4)
+    # db.add(enroll_3)
+    # db.add(enroll_4)
     db.add(enroll_5)
     db.commit()
     db.refresh(enroll_1)
     db.refresh(enroll_2)
-    db.refresh(enroll_3)
-    db.refresh(enroll_4)
+    # db.refresh(enroll_3)
+    # db.refresh(enroll_4)
     db.refresh(enroll_5)
 
     # add assignments
@@ -349,3 +349,56 @@ def populatedb(db: Session = Depends(get_db)):
     db.refresh(submission_1)
     db.refresh(submission_2)
     db.refresh(submission_3)
+
+    disscussion_1 = disscussion_model.Discussion(
+        title="Assignment Submission?",
+        course_id = course_1.id
+    )
+    disscussion_2 = disscussion_model.Discussion(
+        title="Syllabus doubt",
+        course_id = course_1.id
+    )
+
+    db.add(disscussion_2)
+    db.add(disscussion_1)
+    db.commit()
+    db.refresh(disscussion_2)
+    db.refresh(disscussion_1)
+
+    message_1 = disscussion_model.Message(
+        content="I am not able to submit the assignment 1 on time. Can anyone tell me what to do?",
+        user_id=user_7.id,
+        discussion_id=disscussion_1.id
+    )
+    message_2 = disscussion_model.Message(
+        content="I have the same question.",
+        user_id=user_1.id,
+        discussion_id=disscussion_1.id
+    )
+    message_3 = disscussion_model.Message(
+        content="Do you know what is the weightage of final exam?",
+        user_id=user_7.id,
+        discussion_id=disscussion_2.id
+    )
+    message_4 = disscussion_model.Message(
+        content="There is no final exam in this course O_O",
+        user_id=user_6.id,
+        discussion_id=disscussion_2.id
+    )
+
+    db.add(message_1)
+    db.add(message_3)
+    db.commit()
+
+    db.refresh(message_1)
+    db.refresh(message_3)
+    
+    db.add(message_2)
+    db.add(message_4)
+    db.commit()
+
+    db.refresh(message_2)
+    db.refresh(message_4)
+
+
+   
