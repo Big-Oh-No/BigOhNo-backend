@@ -1174,3 +1174,80 @@ async def get_courses(
             detail="Admins can't view course submissions"
             )
 
+
+@router.patch(
+        "/grade_quiz",
+        status_code=201
+)
+async def grade_assignment(
+    assignment_id: int = Form(...),
+    student_email: str = Form(...),
+    grade: float = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """ grades an assignment """
+    user = db.query(user_model.User).filter(and_(user_model.User.email == email,user_model.User.password == hash(password))).first()
+
+    if not user:
+       raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Wrong email and password combination"
+        )
+    
+    if user.role != user_model.RoleEnum.student or user.email != student_email:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Permission Denied"
+        )
+    
+    if not user.verified:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User is not verified"
+        )
+    
+    user_student = db.query(user_model.User).filter(user_model.User.email == student_email).first()
+    if not user_student or user_student.role != user_model.RoleEnum.student:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Invalid student"
+        )
+    
+    student = db.query(user_model.Student).filter(user_model.Student.user_id == user_student.id).first()
+    if not student:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Invalid student"
+        )
+    
+    assignment = db.query(course_model.Assignment).filter(course_model.Assignment.id == assignment_id).first()
+    if not assignment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Assignment not found"
+        )
+    
+    submission = db.query(course_model.Submission).filter(and_(course_model.Submission.assignment_id == assignment_id, course_model.Submission.student_id == student.id)).first()
+    if not submission:
+        new_submission = course_model.Submission(
+            grade = grade,
+            file_url = 'QUIZ',
+            assignment_id = assignment_id,
+            student_id = student.id
+        )
+
+        db.add(new_submission)
+        db.commit()
+        db.refresh(new_submission)
+        print("ok")
+        return {"message": "Submission graded successfully"}
+
+    
+    submission.grade = grade
+    db.commit()
+    db.refresh(submission)
+    print("okayi")
+
+    return {"message": "Submission updated successfully"}

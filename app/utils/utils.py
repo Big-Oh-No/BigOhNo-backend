@@ -3,13 +3,15 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 from hashlib import sha256
 
-from ..models import user_model, course_model
+from ..models import user_model, course_model, disscussion_model
 
 def hash(password: str):
     return sha256(password.encode('utf-8')).hexdigest()
 
 def populatedb(db: Session = Depends(get_db)):
     # clear db
+    db.query(disscussion_model.Message).delete()
+    db.query(disscussion_model.Discussion).delete()
     db.query(course_model.Submission).delete()
     db.query(course_model.Assignment).delete()
     db.query(course_model.Enrollment).delete()
@@ -69,27 +71,29 @@ def populatedb(db: Session = Depends(get_db)):
         )
     
     user_5 = user_model.User(
-        first_name = "John",
-        last_name = "Doe",
-        bio = "I am an admin.",
+        first_name = "Chad",
+        last_name = "Davis",
+        bio = "I am a passionate e-learning administrator dedicated to optimizing online learning experiences.",
         email = "admin@korse.com",
         password = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", # password
         gender = user_model.GenderEnum.male,
         pronouns = "He/Him/His",
         role = user_model.RoleEnum.admin,
-        verified = True
+        verified = True,
+        profile_image='http://localhost:8000/data/profile/admin_pfp.png'
     )
 
     user_6 = user_model.User(
-        first_name = "July",
-        last_name = "Frost",
-        bio = "I am a teacher.",
+        first_name = "Gema",
+        last_name = "Rodríguez-Pérez",
+        bio = "I love empirical software studies that mine open source software repositories to create large datasets.",
         email = "teacher@korse.com",
         password = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", # password
         gender = user_model.GenderEnum.female,
         pronouns = "She/Her",
         role = user_model.RoleEnum.teacher,
-        verified = True
+        verified = True,
+        profile_image='http://localhost:8000/data/profile/teacher_pfp.png'
     )
     
     user_7 = user_model.User(
@@ -101,7 +105,8 @@ def populatedb(db: Session = Depends(get_db)):
         gender = user_model.GenderEnum.male,
         pronouns = "He/Him/His",
         role = user_model.RoleEnum.student,
-        verified = True
+        verified = True,
+        profile_image='http://localhost:8000/data/profile/student_pfp.png'
     )
 
     db.add(user_1)
@@ -197,7 +202,9 @@ def populatedb(db: Session = Depends(get_db)):
         total_seats=100,
         taken_seats=1,
         status=course_model.CourseStatusEnum.active,
-        teacher_id = teacher_2.id
+        teacher_id = teacher_2.id,
+        image_url = 'http://localhost:8000/data/courseimg/cs111.png',
+        syllabus_url = 'http://localhost:8000/data/syllabus/cs111.pdf'
     )
     course_2 = course_model.Course(
         dept=course_model.DeptEnum.stat,
@@ -210,7 +217,8 @@ def populatedb(db: Session = Depends(get_db)):
         total_seats=60,
         taken_seats=1,
         status=course_model.CourseStatusEnum.active,
-        teacher_id = teacher_2.id
+        teacher_id = teacher_2.id,
+        image_url = 'http://localhost:8000/data/courseimg/stat230.png'
     )
     course_3 = course_model.Course(
         dept=course_model.DeptEnum.stat,
@@ -222,7 +230,8 @@ def populatedb(db: Session = Depends(get_db)):
         credits=3,
         total_seats=30,
         status=course_model.CourseStatusEnum.active,
-        teacher_id = teacher_2.id
+        teacher_id = teacher_2.id,
+        image_url = 'http://localhost:8000/data/courseimg/stat303.png'
     )
     course_4 = course_model.Course(
         dept=course_model.DeptEnum.phys,
@@ -234,7 +243,8 @@ def populatedb(db: Session = Depends(get_db)):
         credits=3,
         total_seats=30,
         status=course_model.CourseStatusEnum.active,
-        teacher_id = teacher_1.id
+        teacher_id = teacher_1.id,
+        image_url = 'http://localhost:8000/data/courseimg/phys304.png'
     )
 
     db.add(course_1)
@@ -258,17 +268,17 @@ def populatedb(db: Session = Depends(get_db)):
         course_id=course_2.id,
         student_id=student_3.id
     )
-    enroll_3 = course_model.Enrollment(
-        status=course_model.StatusEnum.pending,
-        course_id=course_3.id,
-        student_id=student_3.id
-    )
-    enroll_4 = course_model.Enrollment(
-        comment="Your preqs don't match.",
-        status=course_model.StatusEnum.declined,
-        course_id=course_4.id,
-        student_id=student_3.id
-    )
+    # enroll_3 = course_model.Enrollment(
+    #     status=course_model.StatusEnum.pending,
+    #     course_id=course_3.id,
+    #     student_id=student_3.id
+    # )
+    # enroll_4 = course_model.Enrollment(
+    #     comment="Your preqs don't match.",
+    #     status=course_model.StatusEnum.declined,
+    #     course_id=course_4.id,
+    #     student_id=student_3.id
+    # )
     enroll_5 = course_model.Enrollment(
         status=course_model.StatusEnum.approved,
         course_id=course_1.id,
@@ -277,14 +287,14 @@ def populatedb(db: Session = Depends(get_db)):
 
     db.add(enroll_1)
     db.add(enroll_2)
-    db.add(enroll_3)
-    db.add(enroll_4)
+    # db.add(enroll_3)
+    # db.add(enroll_4)
     db.add(enroll_5)
     db.commit()
     db.refresh(enroll_1)
     db.refresh(enroll_2)
-    db.refresh(enroll_3)
-    db.refresh(enroll_4)
+    # db.refresh(enroll_3)
+    # db.refresh(enroll_4)
     db.refresh(enroll_5)
 
     # add assignments
@@ -339,3 +349,56 @@ def populatedb(db: Session = Depends(get_db)):
     db.refresh(submission_1)
     db.refresh(submission_2)
     db.refresh(submission_3)
+
+    disscussion_1 = disscussion_model.Discussion(
+        title="Assignment Submission?",
+        course_id = course_1.id
+    )
+    disscussion_2 = disscussion_model.Discussion(
+        title="Syllabus doubt",
+        course_id = course_1.id
+    )
+
+    db.add(disscussion_2)
+    db.add(disscussion_1)
+    db.commit()
+    db.refresh(disscussion_2)
+    db.refresh(disscussion_1)
+
+    message_1 = disscussion_model.Message(
+        content="I am not able to submit the assignment 1 on time. Can anyone tell me what to do?",
+        user_id=user_7.id,
+        discussion_id=disscussion_1.id
+    )
+    message_2 = disscussion_model.Message(
+        content="I have the same question.",
+        user_id=user_1.id,
+        discussion_id=disscussion_1.id
+    )
+    message_3 = disscussion_model.Message(
+        content="Do you know what is the weightage of final exam?",
+        user_id=user_7.id,
+        discussion_id=disscussion_2.id
+    )
+    message_4 = disscussion_model.Message(
+        content="There is no final exam in this course O_O",
+        user_id=user_6.id,
+        discussion_id=disscussion_2.id
+    )
+
+    db.add(message_1)
+    db.add(message_3)
+    db.commit()
+
+    db.refresh(message_1)
+    db.refresh(message_3)
+    
+    db.add(message_2)
+    db.add(message_4)
+    db.commit()
+
+    db.refresh(message_2)
+    db.refresh(message_4)
+
+
+   
