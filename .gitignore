@@ -20,6 +20,8 @@ data/submission/*
 
 !data/syllabus/__init__
 !data/profile/__init__
+!data/assignment/__init__
+!data/submission/__init__
 !data/profile/admin_pfp.png
 !data/profile/teacher_pfp.png
 !data/profile/student_pfp.png
